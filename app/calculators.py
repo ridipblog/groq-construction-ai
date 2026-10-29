@@ -142,6 +142,11 @@ def calculate_residential_estimation(
 
     rebar_details = calculate_rebar_breakdown(total_steel_kg, rate_per_tonne=rate_steel_tonne)
 
+    # Indian Site Quantities (Bags, Brass, CFT, Quintals)
+    cement_bags = math.ceil((concrete_m3 * 8.4) + (plaster_m2 * 0.18) + (total_bricks * 0.024))
+    sand_cft = round((concrete_m3 * 15.9) + (plaster_m2 * 0.70) + (total_bricks * 0.08), 1)
+    aggregate_cft = round(concrete_m3 * 30.0, 1)
+
     return {
         "project_type": "RCC Framed Residential Building (Assam PWD Building SOR 2025-2026)",
         "scope": f"Low-rise G+{floors-1 if floors > 1 else 0} ({floors} level(s)) across Kamrup Metro/Dibrugarh/Silchar/Jorhat",
@@ -151,6 +156,36 @@ def calculate_residential_estimation(
             "total_built_up_area_sqft": round(total_built_up_sqft, 2),
             "total_built_up_area_sqm": round(total_built_up_sqm, 2),
             "seismic_zone_v": seismic_zone_v
+        },
+        "indian_market_materials": {
+            "sariya_tmt_steel": {
+                "total_tonnes": round(steel_tonne, 3),
+                "total_quintals": round(total_steel_kg / 100.0, 2),
+                "total_kg": round(total_steel_kg, 2),
+                "total_12m_commercial_rods": rebar_details["total_standard_12m_rods"],
+                "binding_wire_kg": rebar_details["binding_wire_kg"],
+                "grade": "Fe 500D (IS 1786 High Ductility)",
+                "approx_cost_inr": round(cost_steel, 2)
+            },
+            "cement_bags_50kg": {
+                "total_bags": cement_bags,
+                "description": "Standard 50kg bags (UltraTech, ACC, Ambuja, Dalmia or equivalent OPC 43/53 or PPC)",
+                "application": "Concrete, brick masonry mortar & plastering"
+            },
+            "sand_reti_msand": {
+                "volume_cft": sand_cft,
+                "volume_brass": round(sand_cft / 100.0, 2),
+                "note": "1 Brass = 100 cu.ft (Zone II river sand or washed M-Sand)"
+            },
+            "coarse_aggregate_rori_gitti": {
+                "volume_cft": aggregate_cft,
+                "volume_brass": round(aggregate_cft / 100.0, 2),
+                "note": "20mm down (60%) & 10mm down (40%) graded blue granite / basalt"
+            },
+            "first_class_bricks": {
+                "total_bricks": total_bricks,
+                "description": "Red clay bricks / fly ash bricks (IS 2212)"
+            }
         },
         "material_quantities": {
             "steel_fe500d": {
@@ -205,6 +240,21 @@ def calculate_residential_estimation(
             "zone": "Seismic Zone V",
             "code": "IS 13920:2016",
             "requirement": "Ductile confinement links with 135-degree hooks and 10d extension at all beam-column junctions."
+        },
+        "architectural_configuration": {
+            "rooms_count": max(1, int(round(total_built_up_sqft / 400.0))),
+            "toilets_count": max(1, int(round(total_built_up_sqft / 600.0))),
+            "balconies_count": 1 if total_built_up_sqft >= 800 else 0,
+            "floors_count": floors,
+            "room_size_details": {
+                "Master Bedroom": "150.0 sq.ft",
+                "Living/Dining": "220.0 sq.ft",
+                "Kitchen": "90.0 sq.ft"
+            },
+            "carpet_area_per_floor_sqft": round(total_built_up_sqft * 0.80, 2),
+            "walls_and_circulation_sqft": round(total_built_up_sqft * 0.20, 2),
+            "calculated_built_up_area_per_floor_sqft": built_up_area_sqft,
+            "total_built_up_area_all_floors_sqft": total_built_up_sqft
         }
     }
 

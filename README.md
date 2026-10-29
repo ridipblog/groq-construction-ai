@@ -6,16 +6,19 @@ A production-ready civil structural estimation chatbot agent and REST API design
 
 ## 🌟 Key Capabilities
 
-1. **Steel Rod (Rebar) Predictor & Scheduler**:
-   - Converts total structural steel into **standard commercial 12-meter (40-ft) steel rod counts** per diameter.
-   - Categorizes by diameter:
-     - **8 mm**: Confinement ties & stirrups (IS 13920 135° seismic hooks with 10d extension)
-     - **10 mm**: Slab distribution bars & staircase reinforcement
-     - **12 mm**: Slab main bars & lintels
-     - **16 mm**: Column main bars & beam longitudinal rebar
-     - **20 mm & 25 mm**: Heavy column cages, transfer girders, and deep foundation piles
-   - Computes standard commercial bundle counts and binding wire (~12 kg/tonne).
+1. **Indian Site Engineering & Rebar (Sariya) Scheduler**:
+   - Converts structural steel into **standard commercial 12-meter (40-ft) steel rod counts** and **commercial bundles**.
+   - Standard Indian site units:
+     - **Sariya (TMT Rebar)**: Fe 500D (IS 1786) in Quintals and Metric Tonnes (Tata Tiscon / JSW / SAIL standards).
+     - **Cement Bags**: Standard 50kg bags (OPC 43/53 or PPC).
+     - **Sand (Reti / M-Sand)**: In **Brass** (1 Brass = 100 cu.ft) and CFT.
+     - **Aggregate (Rori / Gitti)**: 20mm & 10mm down graded blue metal in **Brass** and CFT.
+     - **Binding wire**: ~12 kg per metric tonne (1.2%).
    - Bar weight formula: $W = \frac{d^2}{162.28}$ kg/m.
+
+2. **Zero-Token Guardrails & Scope Enforcer**:
+   - Strictly refuses non-construction queries instantly **without consuming any Groq API tokens**.
+   - Output length optimized to strictly under 500 words to minimize token bills and latency.
 
 2. **Official Schedule of Rates (SOR 2025-2026) Calibration**:
    - **Assam PWD Residential Building SOR (PWRD/BLDG/SOR-2025/HSE-01)**:

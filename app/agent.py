@@ -4,53 +4,82 @@ Groq Agent Orchestrator with Function Calling & Civil Engineering Persona
 
 import os
 import json
+import re
 from typing import List, Dict, Any, Optional
 from groq import Groq
 from app.config import settings
 from app.tools import AGENT_TOOLS, execute_tool_call
 from app.calculators import (
     calculate_residential_estimation,
+    calculate_room_based_house_estimation,
     calculate_rebar_breakdown,
     calculate_bridge_pile_estimation,
     calculate_water_retaining_structure
 )
 
-SYSTEM_PROMPT = """You are 'BuildEstimate AI' - an expert Senior Civil Structural Engineer and Cost Estimation Agent for modern construction apps.
+# Indian Construction Domain Keywords for zero-token scope validation
+CONSTRUCTION_KEYWORDS = {
+    "house", "building", "home", "ghar", "makaan", "room", "kamra", "bhk", "bedroom",
+    "toilet", "bathroom", "balcony", "kitchen", "flat", "plot", "steel", "sariya", "rebar",
+    "rod", "tmt", "fe500", "fe500d", "fe550", "cement", "bora", "bag", "concrete", "rcc",
+    "m20", "m25", "m30", "m35", "m40", "m45", "brick", "eent", "plaster", "plastering",
+    "flooring", "tile", "slab", "chhat", "dhalai", "beam", "column", "pillar", "footing",
+    "plinth", "lintel", "foundation", "bored", "pile", "bridge", "pier", "scour", "lacey",
+    "pool", "tank", "swimming", "waterstop", "waterproof", "waterproofing", "cost", "estimate",
+    "estimation", "budget", "rate", "sor", "pwd", "cpwd", "is 456", "is 13920", "is 1786",
+    "is 3370", "morth", "irc", "assam", "guwahati", "kamrup", "silchar", "dibrugarh",
+    "jorhat", "sqft", "sq ft", "square feet", "sqm", "gaj", "brass", "cft", "tonne", "ton",
+    "quintal", "kg", "shuttering", "centering", "stirrup", "tie", "hook", "seismic"
+}
 
-YOUR CORE EXPERTISE:
-1. Civil engineering quantity surveying, structural rebar (steel rods) scheduling, and accurate budgeting.
-2. Official Government of Assam PWD Schedule of Rates (SOR 2025-2026):
-   - Bridge Works SOR (Circular No. CE/PWD(R)/SOR/2025/114)
-   - Residential Building Works SOR (Document Ref: PWRD/BLDG/SOR-2025/HSE-01)
-3. National Codes and Standards:
-   - IS 456:2000 (Plain and Reinforced Concrete)
-   - IS 1786 (High ductility Fe 500D TMT reinforcement bars)
-   - IS 13920:2016 (Ductile design & detailing of reinforced concrete structures subjected to seismic forces - Assam is in Seismic Zone V)
-   - IS 3370 (Part 1-4) & SP 34 (Liquid Retaining Structures & Swimming Pools)
-   - IRC:78-2014 & MoRTH 5th Revision Section 2200 (Deep Foundations in Riverbed Alluvial Strata)
-   - IRC:112 (Concrete Bridges & Ductile Seismic Detailing) and IRC:83 (Bearings)
-   - Assam PWD Bridge Specification 2025 (>60m span river bridges)
+GREETING_WORDS = {"hi", "hello", "hey", "namaste", "pranam", "good morning", "good evening", "good afternoon"}
 
-GUIDELINES FOR STEEL ROD (REBAR) ESTIMATIONS:
-- Always specify rebar in both metric tonnes / kilograms AND standard commercial 12-meter (40 feet) rod counts.
-- Explain diameter distribution:
-  * 8mm: Confinement ties, stirrups (IS 13920 requires 135-degree seismic hooks and 10d extension)
-  * 10mm: Slab distribution bars, staircase reinforcement
-  * 12mm: Slab main bars, lintels
-  * 16mm: Column longitudinals & beam tensile/compression bars
-  * 20mm & 25mm: Heavy columns, bridge pier cages, bored RCC piles
-- Use the standard bar weight formula: Weight per metre = d^2 / 162.28 kg/m.
-- Include binding wire requirements (~12 kg per metric tonne of steel).
+def check_construction_scope(user_message: str) -> Optional[str]:
+    """
+    Zero-token guardrail: Checks if query is construction-related.
+    Returns early response for non-construction queries to save Groq API tokens.
+    """
+    clean_text = user_message.lower().strip()
+    words = re.findall(r'\b\w+\b', clean_text)
+    
+    # Handle pure greetings
+    if len(words) <= 3 and any(w in GREETING_WORDS for w in words):
+        return (
+            "🙏 **Namaste! I am BuildEstimate AI** — your Indian Civil Structural & Cost Estimation Engineer.\n\n"
+            "I provide exact material and steel rod (Sariya) estimations for:\n"
+            "* **Residential Houses & Buildings** (by room count or sq.ft area per Assam PWD SOR 2025–26)\n"
+            "* **Sariya (Fe500D TMT)** rod schedules (8mm, 10mm, 12mm, 16mm, 20mm counts & bundles)\n"
+            "* **Bridge Piers & Deep Foundation Piles** (Lacey Scour Depth & MoRTH specs)\n"
+            "* **Swimming Pools & Water Tanks** (IS 3370 waterstops & waterproofing)\n\n"
+            "Please share your building dimensions or room configuration to get started!"
+        )
 
-CRITICAL INSTRUCTIONS:
-- Whenever the user asks for estimations, material quantities, or steel rod schedules, ALWAYS call the corresponding calculation tools first to ensure 100% mathematical precision.
-- Present your final output in clean, professional markdown with organized sections:
-  1. Executive Summary & Project Parameters
-  2. Steel Rebar Schedule & Rod Count Table (Diameter, Weight, 12m Standard Rods, Bundles, Use)
-  3. Concrete & Key Material Quantities (M25/M35/M40, Bricks, Plaster, Tiles)
-  4. Cost Breakdown per Assam PWD SOR 2025-2026
-  5. Mandatory Seismic (Zone V) & Code Compliance Provisions
-- Be polite, technically rigorous, and conversational.
+    # Check for construction keywords
+    has_construction_intent = any(kw in clean_text for kw in CONSTRUCTION_KEYWORDS)
+    if not has_construction_intent:
+        return (
+            "⚠️ **Scope Notice:** Namaste! I am BuildEstimate AI, dedicated strictly to **Indian civil construction, structural steel rod (sariya) estimations, and PWD SOR costing**.\n\n"
+            "Please ask a question related to building construction, steel rebar schedules, cement/sand/aggregate, concrete grades (M20/M25), bridge piles, or house floor plans."
+        )
+
+    return None
+
+SYSTEM_PROMPT = """You are 'BuildEstimate AI' - Senior Indian Civil Structural Engineer (Chartered Engineer / MIE).
+You specialize strictly in Indian construction practices, IS Codes, and Government of Assam PWD Schedule of Rates (SOR 2025-2026).
+
+INDIAN SITE METRICS & TERMINOLOGY:
+- Currency: Indian Rupees (₹ / INR), format in Lakhs / Crores (e.g., ₹12.50 Lakhs).
+- Steel Rebar (Sariya): Grade Fe 500D (IS 1786). Always specify 12-meter commercial rod counts per diameter (8mm, 10mm, 12mm, 16mm, 20mm), standard bundle packaging, and binding wire (~12 kg/tonne).
+- Concrete & Masonry: M25 Grade (IS 456), Cement in 50kg bags (Bora), Sand (Reti/M-Sand) & Aggregate (Rori/Gitti) in Brass (1 Brass = 100 CFT) and CFT.
+- Seismic Zone V: Mandatory IS 13920:2016 ductile confinement ties with 135-degree hooks and 10d extension at column-beam joints.
+- Bridge & Scour: IRC:78-2014 & MoRTH Section 2200 Lacey scour depth R = 0.473*(Q/f)^(1/3), bored RCC piles (1000mm @ ₹4,550/m).
+- Swimming Pools: IS 3370 (Part 1-4) M30 mix (w/c<=0.45), 20x10mm swellable hydrophilic waterstop (₹450/m), dual-layer waterproofing (₹650/m²), mosaic tiles (₹1,450/m²).
+
+RULES TO MINIMIZE TOKENS & MAXIMIZE VALUE:
+1. ALWAYS call the appropriate calculation tool first for 100% exact math.
+2. Present output in crisp, structured Indian engineering tables and concise bullet points.
+3. Be direct, authoritative, and practical. Eliminate conversational filler, repeated boilerplate, and lengthy pleasantries.
+4. Keep final response strictly under 500 words.
 """
 
 class ConstructionAgent:
@@ -66,9 +95,22 @@ class ConstructionAgent:
     ) -> Dict[str, Any]:
         """
         Executes an agent turn with Groq API, supporting tool calling.
-        If GROQ_API_KEY is not configured or offline, falls back gracefully
-        to deterministic estimation execution with full calculation output.
+        Includes zero-token guardrails to immediately reject non-construction queries.
         """
+        # Zero-Token Scope Guardrail:
+        # Check if the query is non-construction related to prevent burning tokens
+        if messages:
+            last_user_msg = messages[-1].get("content", "")
+            scope_notice = check_construction_scope(last_user_msg)
+            if scope_notice:
+                return {
+                    "reply": scope_notice,
+                    "model_used": "scope-guardrail (0 tokens consumed)",
+                    "tools_executed": [],
+                    "structured_results": [],
+                    "status": "filtered"
+                }
+
         active_model = custom_model or self.model
         
         # If no API key is provided, use deterministic calculation fallback
@@ -83,14 +125,14 @@ class ConstructionAgent:
         structured_results = []
 
         try:
-            # First LLM call: LLM decides whether to call tools
+            # First LLM call: LLM decides whether to call tools (600 token limit ensures complete tool JSON)
             response = self.client.chat.completions.create(
                 model=active_model,
                 messages=formatted_messages,
                 tools=AGENT_TOOLS,
                 tool_choice="auto",
-                temperature=0.2,
-                max_tokens=2500
+                temperature=0.1,
+                max_tokens=600
             )
 
             response_message = response.choices[0].message
@@ -120,12 +162,12 @@ class ConstructionAgent:
                         "content": json.dumps(tool_output)
                     })
 
-                # Second LLM call: Model generates final response incorporating tool results
+                # Second LLM call: Model generates concise Indian engineering response
                 second_response = self.client.chat.completions.create(
                     model=active_model,
                     messages=formatted_messages,
-                    temperature=0.2,
-                    max_tokens=2500
+                    temperature=0.1,
+                    max_tokens=1500
                 )
                 final_content = second_response.choices[0].message.content
             else:
