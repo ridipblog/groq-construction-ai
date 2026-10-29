@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BuildEstimate AI - Construction Agent & Steel Estimator</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --primary: #d97706;
+      --primary-dark: #b45309;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --success: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    header {
+      background: #111827;
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fbbf24;
+    }
+    .badge {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .api-key-input {
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: #e5e7eb;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      width: 240px;
+    }
+    .api-key-input:focus { outline: none; border-color: var(--primary); }
+    .nav-links a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.85rem;
+      margin-left: 12px;
+    }
+    .nav-links a:hover { text-decoration: underline; }
+    
+    .main-container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 65px);
+      overflow: hidden;
+    }
+
+    /* Left Sidebar: Quick Estimators */
+    .sidebar {
+      width: 380px;
+      border-right: 1px solid var(--card-border);
+      background: #131d2e;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .sidebar h2 {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .calc-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .calc-card h3 {
+      font-size: 0.95rem;
+      color: #f3f4f6;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .form-group {
+      margin-bottom: 10px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: var(--primary-dark); }
+    .btn-secondary {
+      background: #334155;
+      margin-top: 6px;
+    }
+    .btn-secondary:hover { background: #475569; }
+
+    /* Right Area: Chat with Agent */
+    .chat-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0f172a;
+      overflow: hidden;
+    }
+    .chips-bar {
+      padding: 10px 20px;
+      background: #111827;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .chip {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip:hover {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .messages-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .msg {
+      max-width: 85%;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+    .msg-user {
+      align-self: flex-end;
+      background: #1e3a8a;
+      color: #f0fdf4;
+      border-bottom-right-radius: 2px;
+    }
+    .msg-assistant {
+      align-self: flex-start;
+      background: #1e293b;
+      border: 1px solid var(--card-border);
+      border-bottom-left-radius: 2px;
+    }
+    .msg-assistant pre {
+      background: #0f172a;
+      padding: 10px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 10px 0;
+      font-size: 0.82rem;
+    }
+    .msg-assistant code {
+      background: #0f172a;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: #38bdf8;
+    }
+    .msg-assistant table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 0.85rem;
+    }
+    .msg-assistant th, .msg-assistant td {
+      border: 1px solid #334155;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    .msg-assistant th { background: #0f172a; color: #fbbf24; }
+    .tools-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin-bottom: 8px;
+    }
+
+    .input-bar {
+      padding: 16px 20px;
+      background: #111827;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      gap: 12px;
+    }
+    .input-bar input {
+      flex: 1;
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    .input-bar input:focus { outline: none; border-color: var(--primary); }
+    .input-bar button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 0 24px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .input-bar button:hover { background: var(--primary-dark); }
+    .input-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Modal for Code Snippet */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: #1e293b;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      max-width: 650px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:1.6rem">🏗️</span>
+    <div>
+      <h1>BuildEstimate AI</h1>
+      <span class="badge">Assam PWD SOR 2025-2026 • IS 13920 Zone V • Groq</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <input type="password" id="customApiKey" class="api-key-input" placeholder="Groq API Key (Optional Override)">
+    <div class="nav-links">
+      <a href="/docs" target="_blank">📖 Swagger Docs</a>
+      <a href="#" onclick="openSnippetModal()">📱 Frontend Code Snippets</a>
+    </div>
+  </div>
+</header>
+
+<div class="main-container">
+  <!-- Left Column: Quick Form Estimators -->
+  <aside class="sidebar">
+    <h2>⚡ Direct Engineering Calculators</h2>
+
+    <!-- Residential Calculator Card -->
+    <div class="calc-card">
+      <h3>🏠 Residential House Estimator</h3>
+      <div class="form-group">
+        <label>Floor Built-Up Area (sq.ft)</label>
+        <input type="number" id="resArea" value="1200">
+      </div>
+      <div class="form-group">
+        <label>Floors</label>
+        <select id="resFloors">
+          <option value="1">Ground Floor (G)</option>
+          <option value="2" selected>G + 1 (2 Storeys)</option>
+          <option value="3">G + 2 (3 Storeys)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Seismic Zone</label>
+        <select id="resZone">
+          <option value="true" selected>Zone V (IS 13920 135° Hooks)</option>
+          <option value="false">Standard Non-Seismic</option>
+        </select>
+      </div>
+      <button class="btn" onclick="runDirectResidential()">Calculate Rebar & Materials</button>
+    </div>
+
+    <!-- Rebar Schedule Card -->
+    <div class="calc-card">
+      <h3>🔩 Steel Rod (Rebar) Scheduler</h3>
+      <div class="form-group">
+        <label>Total Steel Weight (kg)</label>
+        <input type="number" id="rebarTotalKg" value="5400">
+      </div>
+      <div class="form-group">
+        <label>Project Type</label>
+        <select id="rebarType">
+          <option value="residential">Residential (₹82,000 / MT)</option>
+          <option value="bridge">Bridge / Infrastructure (₹86,500 / MT)</option>
+        </select>
+      </div>
+      <button class="btn" onclick="runDirectRebar()">Generate 12m Rod Schedule</button>
+    </div>
+
+    <!-- Bridge Pile Scour Card -->
+    <div class="calc-card">
+      <h3>🌉 Bridge Pier & Scour Calculator</h3>
+      <div class="form-group">
+        <label>Peak Flood Discharge Q (m³/s)</label>
+        <input type="number" id="bridgeQ" value="4500">
+      </div>
+      <div class="form-group">
+        <label>Superstructure Span (m)</label>
+        <input type="number" id="bridgeSpan" value="45">
+      </div>
+      <button class="btn" onclick="runDirectBridge()">Calculate Scour & Piles</button>
+    </div>
+  </aside>
+
+  <!-- Right Column: Interactive Groq AI Chat -->
+  <main class="chat-section">
+    <!-- Suggested Query Chips -->
+    <div class="chips-bar">
+      <span class="chip" onclick="sendChip(this)">Estimate steel rods for a 1500 sq.ft G+1 house in Guwahati</span>
+      <span class="chip" onclick="sendChip(this)">How many 12mm & 16mm rods do I need for 6 tonnes of steel?</span>
+      <span class="chip" onclick="sendChip(this)">Calculate scour depth and pile cage for Q=5000 cumecs bridge</span>
+      <span class="chip" onclick="sendChip(this)">What are the IS 13920 Seismic Zone V ductile requirements?</span>
+      <span class="chip" onclick="sendChip(this)">Swimming pool 15m x 8m x 2m waterstop & waterproofing cost</span>
+    </div>
+
+    <!-- Messages Container -->
+    <div class="messages-area" id="messagesArea">
+      <div class="msg msg-assistant">
+        <div class="tools-tag">BuildEstimate AI Agent Ready</div>
+        <p>👋 Welcome! I am your Senior Civil Structural & Cost Estimation Agent powered by <strong>Groq</strong> and the <strong>Assam PWD Schedule of Rates (SOR 2025-2026)</strong>.</p>
+        <p style="margin-top:8px;">Ask me anything about:</p>
+        <ul style="margin-left: 20px; margin-top: 6px;">
+          <li>Steel rebar rod estimations (counts of 12m standard rods, diameter breakdown: 8mm, 10mm, 12mm, 16mm, 20mm, 25mm).</li>
+          <li>Residential RCC framed house material budgeting (IS 456, IS 13920 Zone V ductile confinement).</li>
+          <li>Bridge deep foundations, Lacey scour depth equation, MoRTH Section 2200, and IRC:78-2014.</li>
+          <li>Swimming pools & water retaining structures per IS 3370 (waterstops, crystalline waterproofing).</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="input-bar">
+      <input type="text" id="userInput" placeholder="Ask about steel rods, residential houses, bridge piles, or SOR rates..." onkeypress="if(event.key==='Enter') sendMessage()">
+      <button id="sendBtn" onclick="sendMessage()">Send</button>
+    </div>
+  </main>
+</div>
+
+<!-- Frontend Code Snippet Modal -->
+<div class="modal-overlay" id="snippetModal" onclick="if(event.target===this) closeSnippetModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 style="color:#fbbf24;">Frontend Integration Examples</h3>
+      <button style="background:transparent;border:none;color:#cbd5e1;font-size:1.2rem;cursor:pointer;" onclick="closeSnippetModal()">✕</button>
+    </div>
+    <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:12px;">Call the API directly from your React, Vue, Next.js, Flutter, or mobile app:</p>
+
+    <h4 style="font-size:0.85rem;color:#38bdf8;margin-bottom:6px;">JavaScript / TypeScript (Fetch API):</h4>
+    <pre style="background:#0f172a;padding:12px;border-radius:6px;font-size:0.8rem;overflow-x:auto;color:#cbd5e1;"><code>// Send chat query to Construction Agent
+const response = await fetch("http://localhost:8000/api/chat", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    messages: [
+      { role: "user", content: "Estimate steel rods for 1500 sqft G+1 house" }
+    ],
+    model: "llama-3.3-70b-versatile" // or leave default
+  })
+});
+const data = await response.json();
+console.log(data.reply);
+console.log("Structured Tools Result:", data.structured_results);</code></pre>
+
+    <h4 style="font-size:0.85rem;color:#38bdf8;margin:12px 0 6px 0;">Flutter / Dart:</h4>
+    <pre style="background:#0f172a;padding:12px;border-radius:6px;font-size:0.8rem;overflow-x:auto;color:#cbd5e1;"><code>final res = await http.post(
+  Uri.parse('http://localhost:8000/api/estimate/residential'),
+  headers: {'Content-Type': 'application/json'},
+  body: jsonEncode({
+    'built_up_area_sqft': 1500,
+    'floors': 2,
+    'seismic_zone_v': true
+  }),
+);
+final Map&lt;String, dynamic&gt; estimate = jsonDecode(res.body);
+print("Total 12m Rods: ${estimate['rebar_breakdown']['total_standard_12m_rods']}");</code></pre>
+  </div>
+</div>
+
+<script>
+let conversationHistory = [];
+
+function openSnippetModal() {
+  document.getElementById('snippetModal').style.display = 'flex';
+}
+function closeSnippetModal() {
+  document.getElementById('snippetModal').style.display = 'none';
+}
+
+function sendChip(el) {
+  document.getElementById('userInput').value = el.innerText;
+  sendMessage();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const query = input.value.trim();
+  if (!query) return;
+
+  const sendBtn = document.getElementById('sendBtn');
+  const messagesArea = document.getElementById('messagesArea');
+  const customKey = document.getElementById('customApiKey').value.trim();
+
+  // Add User Message to UI
+  input.value = '';
+  input.disabled = true;
+  sendBtn.disabled = true;
+
+  conversationHistory.push({ role: 'user', content: query });
+  
+  const userDiv = document.createElement('div');
+  userDiv.className = 'msg msg-user';
+  userDiv.innerText = query;
+  messagesArea.appendChild(userDiv);
+
+  // Add Assistant placeholder
+  const assistDiv = document.createElement('div');
+  assistDiv.className = 'msg msg-assistant';
+  assistDiv.innerHTML = '<div class="tools-tag">Analyzing specs & calculating...</div><p>Calculating rebar, quantities & SOR rates...</p>';
+  messagesArea.appendChild(assistDiv);
+  messagesArea.scrollTop = messagesArea.scrollHeight;
+
+  try {
+    const payload = {
+      messages: conversationHistory
+    };
+    if (customKey) payload.api_key = customKey;
+
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    conversationHistory.push({ role: 'assistant', content: data.reply });
+
+    let toolsHtml = '';
+    if (data.tools_executed && data.tools_executed.length > 0) {
+      const toolNames = data.tools_executed.map(t => t.tool).join(', ');
+      toolsHtml = `<div class="tools-tag">⚙️ Executed Tools: ${toolNames}</div>`;
+    }
+
+    assistDiv.innerHTML = toolsHtml + marked.parse(data.reply);
+  } catch (err) {
+    assistDiv.innerHTML = `<span style="color:#ef4444;">❌ Error communicating with API: ${err.message}</span>`;
+  } finally {
+    input.disabled = false;
+    sendBtn.disabled = false;
+    input.focus();
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+  }
+}
+
+async function runDirectResidential() {
+  const area = parseFloat(document.getElementById('resArea').value);
+  const floors = parseInt(document.getElementById('resFloors').value);
+  const zone = document.getElementById('resZone').value === 'true';
+
+  document.getElementById('userInput').value = `Perform detailed residential steel and material estimation for a ${area} sq.ft floor area with ${floors} floors in Seismic Zone V per Assam PWD SOR 2025-2026.`;
+  sendMessage();
+}
+
+async function runDirectRebar() {
+  const kg = parseFloat(document.getElementById('rebarTotalKg').value);
+  const type = document.getElementById('rebarType').value;
+
+  document.getElementById('userInput').value = `Break down ${kg} kg of steel rebar into standard 12-metre rod counts per diameter (8mm, 10mm, 12mm, 16mm, 20mm) and calculate bundles for ${type} construction.`;
+  sendMessage();
+}
+
+async function runDirectBridge() {
+  const q = parseFloat(document.getElementById('bridgeQ').value);
+  const span = parseFloat(document.getElementById('bridgeSpan').value);
+
+  document.getElementById('userInput').value = `Calculate river scour depth with Lacey's equation for flood discharge Q=${q} cumecs, span=${span}m, and estimate bored RCC pile foundation reinforcement cages per MoRTH and Assam PWD SOR 2025-2026.`;
+  sendMessage();
+}
+</script>
+</body>
+</html>
