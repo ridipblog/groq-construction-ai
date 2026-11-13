@@ -19,12 +19,14 @@ class ChatController extends Controller
             'messages' => 'required|array|min:1',
             'messages.*.role' => 'required|string|in:user,assistant,system',
             'messages.*.content' => 'required|string',
+            'active_estimate' => 'sometimes|nullable|array',
             'api_key' => 'sometimes|nullable|string',
             'model' => 'sometimes|nullable|string',
         ]);
 
         $result = $this->agent->processChat(
             messages: $validated['messages'],
+            activeEstimate: $validated['active_estimate'] ?? null,
             apiKey: $validated['api_key'] ?? null,
             model: $validated['model'] ?? null
         );

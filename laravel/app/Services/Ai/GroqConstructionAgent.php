@@ -29,22 +29,41 @@ class GroqConstructionAgent
     protected const GREETING_WORDS = ['hi', 'hello', 'hey', 'namaste', 'pranam', 'good morning', 'good evening', 'good afternoon'];
 
     public const SYSTEM_PROMPT = <<<EOT
-You are 'BuildEstimate AI' - Senior Indian Civil Structural Engineer (Chartered Engineer / MIE).
-You specialize strictly in Indian construction practices, IS Codes, and Government of Assam PWD Schedule of Rates (SOR 2025-2026).
+# Role & Identity
+You are the Lead Site Engineering Advisor & Technical Consultant for **BuildEstimate AI**. You operate alongside deterministic PHP engineering calculation engines to assist contractors, civil engineers, and builders with structural quantities, material procurement, field execution, and IS/NBC compliance.
 
-INDIAN SITE METRICS & TERMINOLOGY:
-- Currency: Indian Rupees (₹ / INR), format in Lakhs / Crores (e.g., ₹12.50 Lakhs).
-- Steel Rebar (Sariya): Grade Fe 500D (IS 1786). Always specify 12-meter commercial rod counts per diameter (8mm, 10mm, 12mm, 16mm, 20mm), standard bundle packaging, and binding wire (~12 kg/tonne).
-- Concrete & Masonry: M25 Grade (IS 456), Cement in 50kg bags (Bora), Sand (Reti/M-Sand) & Aggregate (Rori/Gitti) in Brass (1 Brass = 100 CFT) and CFT.
-- Seismic Zone V: Mandatory IS 13920:2016 ductile confinement ties with 135-degree hooks and 10d extension at column-beam joints.
-- Bridge & Scour: IRC:78-2014 & MoRTH Section 2200 Lacey scour depth R = 0.473*(Q/f)^(1/3), bored RCC piles (1000mm @ ₹4,550/m).
-- Swimming Pools: IS 3370 (Part 1-4) M30 mix (w/c<=0.45), 20x10mm swellable hydrophilic waterstop (₹450/m), dual-layer waterproofing (₹650/m²), mosaic tiles (₹1,450/m²).
+# Core Architecture & Strict Zero-Math Protocol
+1. Never Calculate Critical Quantities Manually:
+   - All steel tonnage, 12m commercial rod counts (sariya numbers per diameter), cement bags, brass/CFT aggregates, brick counts, and foundation scour depths are computed exclusively by backend PHP services.
+   - If the user asks for an estimate, bill of quantities (BOQ), or steel breakdown, identify their parameters (built-up area, room counts, foundation type, soil/water parameters) and invoke the relevant estimation tool.
+   - Do NOT invent or approximate numbers or formulas on the fly. The deterministic backend supplies the ground truth.
 
-RULES TO MINIMIZE TOKENS & MAXIMIZE VALUE:
-1. ALWAYS call the appropriate calculation tool first for 100% exact math.
-2. Present output in crisp, structured Indian engineering tables and concise bullet points.
-3. Be direct, authoritative, and practical. Eliminate conversational filler, repeated boilerplate, and lengthy pleasantries.
-4. Keep final response strictly under 500 words.
+2. Injected Estimate Synchronization (active_estimate):
+   - The user's screen displays a live BOQ, commercial rod schedule, and lifecycle breakdown (active_estimate).
+   - Always refer directly to the values currently on their screen when answering follow-up queries (e.g., "Looking at your current 4-phase BOQ...", "For your 12m sariya schedule...").
+   - Clearly guide them on site procurement, order batching (e.g., bundle sizes, binding wire requirements at ~12 kg/tonne), and stage-wise execution.
+
+# Exclusions & Strict Boundaries
+- NO Seismic References: Do NOT mention, output, or discuss seismic zone classifications (e.g., Zone V, Zone IV), earthquake hazard factors, ductile detailing clauses for earthquake design, or seismic coefficients in your chat explanations, calculations, or summaries. Focus strictly on structural strength, durability, nominal clear cover, standard lapping, and good site workmanship without bringing up earthquake/seismic mechanics.
+- Imperial vs. Metric Consistency: Match the user's conversational unit (sq.ft vs. m², CFT vs. Brass vs. m³), but always present steel rods in metric commercial stock lengths (12m standard bars) and cement in 50kg bags.
+
+# Technical Standards & Field Rules
+Anchor all practical guidance to verified standards:
+- Plain & Reinforced Concrete: IS 456:2000 (clear covers, nominal/design mixes, strip times).
+- Steel Reinforcement: IS 1786 (Fe500D grades, nominal diameters 8mm - 32mm, W = d² / 162.28 kg/m).
+- Water Retaining Structures: IS 3370 (M30 concrete, hydrophilic waterstops, dual-layer waterproofing).
+- Anti-Termite Treatment: IS 6313 (chemical barrier specifications).
+- Deep Foundations / Piles: MoRTH Section 2200 for bored cast-in-place RCC piles.
+- Architectural & Space Planning: NBC 2016 standard room dimensions and clear heights.
+
+# Tone & Response Structure
+1. Direct Answer: Provide clear, professional clarity in the opening 1–2 sentences.
+2. Context-Aware Breakdown: When discussing materials, organize by the 4-phase lifecycle:
+   - Phase 1: Structural (M25 concrete, 12m Sariya rods by diameter, formwork shuttering, cover blocks).
+   - Phase 2: Masonry (1st class bricks, 50kg cement bags, sand/aggregate in CFT/Brass, anti-termite).
+   - Phase 3: Finishes (Terrace waterproofing, wall putty, primer, paint, vitrified tiles, epoxy grout).
+   - Phase 4: Openings & MEP (Doors, UPVC windows, overhead tank, FR copper wiring, CPVC/SWR plumbing).
+3. Site Insights & Proactive Engineering Checks: Provide pragmatic field tips (e.g., chair spacers for top rebar mats, honeycombing prevention, proper curing duration of minimum 7–10 days).
 EOT;
 
     public function __construct(
@@ -267,7 +286,7 @@ EOT;
         }
     }
 
-    public function processChat(array $messages, ?string $apiKey = null, ?string $model = null): array
+    public function processChat(array $messages, ?array $activeEstimate = null, ?string $apiKey = null, ?string $model = null): array
     {
         $lastUserMsg = '';
         for ($i = count($messages) - 1; $i >= 0; $i--) {
@@ -277,7 +296,20 @@ EOT;
             }
         }
 
-        if ($guardrail = $this->checkScope($lastUserMsg)) {
+        // Contextual keywords that refer to the active estimate on screen
+        $contextualReferral = false;
+        if (!empty($activeEstimate)) {
+            $referralKeywords = ['review', 'these', 'this', 'next step', 'proceed', 'material', 'explain', 'detail', 'cost', 'sariya', 'schedule', 'table', 'breakdown', 'verify', 'ok', 'okay', 'yes', 'tell me more', 'how much'];
+            $cleanLower = strtolower($lastUserMsg);
+            foreach ($referralKeywords as $rk) {
+                if (str_contains($cleanLower, $rk)) {
+                    $contextualReferral = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$contextualReferral && ($guardrail = $this->checkScope($lastUserMsg))) {
             return [
                 'response' => $guardrail,
                 'tool_calls' => [],
@@ -304,7 +336,42 @@ EOT;
         $fullMessages = [
             ['role' => 'system', 'content' => self::SYSTEM_PROMPT]
         ];
-        foreach ($messages as $m) {
+
+        // If an estimate is active on the right panel, inject its concise technical summary into the system context
+        if (!empty($activeEstimate)) {
+            $contextBrief = "ACTIVE STRUCTURE ON SCREEN (Currently displayed on user's right panel):\n";
+            if (!empty($activeEstimate['project_type'])) {
+                $contextBrief .= "- Project: {$activeEstimate['project_type']}\n";
+            }
+            if (!empty($activeEstimate['inputs']['total_built_up_area_sqft'])) {
+                $contextBrief .= "- Total Built-up Area: {$activeEstimate['inputs']['total_built_up_area_sqft']} sq.ft ({$activeEstimate['inputs']['number_of_floors']} floor(s))\n";
+            }
+            if (!empty($activeEstimate['cost_summary']['total_estimated_materials_cost_inr'])) {
+                $contextBrief .= "- Total Material Cost: ₹{$activeEstimate['cost_summary']['total_estimated_materials_cost_inr']} (₹{$activeEstimate['cost_summary']['cost_per_sqft_inr']}/sqft)\n";
+            }
+            if (!empty($activeEstimate['rebar_breakdown']['total_steel_kg'])) {
+                $contextBrief .= "- Sariya Steel: {$activeEstimate['rebar_breakdown']['total_steel_tonnes']} Tonnes ({$activeEstimate['rebar_breakdown']['total_standard_12m_rods']} standard 12m rods)\n";
+            }
+            if (!empty($activeEstimate['indian_market_materials'])) {
+                $im = $activeEstimate['indian_market_materials'];
+                $contextBrief .= "- Cement: {$im['cement_bags_50kg']['total_bags']} bags | Sand: {$im['sand_reti_msand']['volume_brass']} Brass | Aggregate: {$im['coarse_aggregate_rori_gitti']['volume_brass']} Brass | Bricks: {$im['first_class_bricks']['total_bricks']} nos\n";
+            }
+            if (!empty($activeEstimate['scour_hydraulics'])) {
+                $sh = $activeEstimate['scour_hydraulics'];
+                $contextBrief .= "- Lacey Scour Depth R: {$sh['mean_scour_depth_R_metres']}m, Max Pier Scour: {$sh['max_scour_depth_under_pier_Dpier_metres']}m\n";
+            }
+
+            $contextBrief .= "INSTRUCTION FOR CONTEXTUAL QUERIES: If the user says 'review the materials', 'explain this', 'proceed to next step', or asks about site phases, discuss THIS active structure directly and guide them on procurement, execution sequence, or site safety.";
+
+            $fullMessages[] = [
+                'role' => 'system',
+                'content' => $contextBrief
+            ];
+        }
+        
+        // Sliding window: keep only the last 4 conversational turns to optimize prompt tokens
+        $recentMessages = array_slice($messages, -6);
+        foreach ($recentMessages as $m) {
             $fullMessages[] = [
                 'role' => $m['role'],
                 'content' => $m['content']
@@ -316,8 +383,8 @@ EOT;
             'messages' => $fullMessages,
             'tools' => $this->getToolDeclarations(),
             'tool_choice' => 'auto',
-            'temperature' => 0.2,
-            'max_tokens' => 2048,
+            'temperature' => 0.1,
+            'max_tokens' => 512,
         ];
 
         $verifySsl = config('construction.groq.verify_ssl', false);
@@ -392,8 +459,8 @@ EOT;
         $finalPayload = [
             'model' => $activeModel,
             'messages' => $fullMessages,
-            'temperature' => 0.2,
-            'max_tokens' => 2048,
+            'temperature' => 0.1,
+            'max_tokens' => 512,
         ];
 
         try {

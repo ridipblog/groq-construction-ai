@@ -4,6 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\EstimateController;
 use App\Http\Controllers\Api\RatesController;
+use App\Http\Controllers\ChatbotController;
+
+// Direct conversational construction AI endpoint
+Route::post('/chat', [ChatbotController::class, 'ask']);
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', function () {

@@ -1,23 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BuildEstimate AI - Construction & Civil Engineering API Studio</title>
-    <!-- Tailwind CSS CDN -->
+    <title>BuildEstimate AI — Civil Structural & Cost Estimation Suite</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN with custom config -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
                     colors: {
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            500: '#0284c7',
-                            600: '#0369a1',
-                            700: '#075985',
-                            900: '#0c4a6e',
+                        slate: {
+                            850: '#151f32',
+                            900: '#0f172a',
+                            950: '#080d1a',
+                        },
+                        amber: {
+                            450: '#f59e0b',
+                            500: '#d97706',
+                        },
+                        indigo: {
+                            600: '#4f46e5',
+                            700: '#4338ca',
                         }
                     }
                 }
@@ -28,396 +42,244 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- Marked for Markdown rendering in Chat -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <style>
         [x-cloak] { display: none !important; }
-        .prose table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; margin-bottom: 0.5rem; }
-        .prose th, .prose td { border: 1px solid #e2e8f0; padding: 0.4rem 0.6rem; font-size: 0.85rem; }
-        .prose th { background-color: #f8fafc; font-weight: 600; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .dark-scroll::-webkit-scrollbar-thumb { background: #334155; }
+        
+        /* Prose styling for AI chat */
+        .prose table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 0.75rem 0; border: 1px solid #e2e8f0; border-radius: 0.5rem; overflow: hidden; }
+        .prose th, .prose td { padding: 0.5rem 0.75rem; font-size: 0.8125rem; border-bottom: 1px solid #f1f5f9; }
+        .prose th { background-color: #f8fafc; font-weight: 600; color: #1e293b; text-align: left; }
+        .prose tr:last-child td { border-bottom: none; }
+        .prose strong { color: #0f172a; font-weight: 600; }
+        .prose ul, .prose ol { margin-left: 1.25rem; margin-top: 0.35rem; margin-bottom: 0.35rem; }
+        .prose li { margin-top: 0.15rem; margin-bottom: 0.15rem; }
+        .prose p { margin-top: 0.4rem; margin-bottom: 0.4rem; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col" x-data="dashboardApp()" x-cloak>
+<body class="h-full bg-[#f8fafc] text-slate-800 antialiased flex flex-col font-sans selection:bg-amber-500 selection:text-white" x-data="buildEstimateApp()" x-cloak>
 
-    <!-- Header -->
-    <header class="bg-slate-900 text-white shadow-md border-b border-slate-800 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center space-x-3">
-                <span class="text-2xl">🏗️</span>
+    <!-- Top Navigation Bar -->
+    <header class="bg-slate-950 text-white border-b border-slate-800/80 sticky top-0 z-50 backdrop-blur-md bg-opacity-95">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            
+            <!-- Brand & Tagline -->
+            <div class="flex items-center space-x-3.5">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-400 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 font-black text-xl tracking-tighter">
+                    BE
+                </div>
                 <div>
-                    <h1 class="text-lg font-bold tracking-tight">BuildEstimate AI <span class="text-xs bg-sky-500/20 text-sky-300 border border-sky-400/30 px-2 py-0.5 rounded-full ml-2">Laravel 11+ & IS Codes</span></h1>
-                    <p class="text-xs text-slate-400">Assam PWD SOR (2025-2026) • IS 456 / IS 13920 / IS 3370 • MoRTH</p>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-base tracking-tight text-white">BuildEstimate</span>
+                        <span class="text-xs bg-amber-400/10 text-amber-400 border border-amber-400/20 px-2 py-0.5 rounded-full font-medium">Enterprise Suite</span>
+                        <span class="text-[11px] text-slate-400 hidden md:inline">|</span>
+                        <span class="text-[11px] text-slate-400 font-medium hidden md:inline">Assam PWD SOR (2025–26)</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 leading-none mt-0.5">IS 456 • IS 13920 (Zone V) • IS 3370 • MoRTH Deep Foundation</p>
                 </div>
             </div>
 
-            <!-- Global API Key config -->
-            <div class="flex items-center space-x-2 text-xs">
-                <span class="text-slate-400 hidden sm:inline">Groq Key:</span>
-                <input type="password" x-model="customApiKey" placeholder="Optional Custom Groq Key" 
-                       class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded px-2.5 py-1 focus:ring-1 focus:ring-sky-400 focus:outline-none w-44">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800">
-                    REST API Ready
-                </span>
-            </div>
-        </div>
+            <!-- Top Right Utilities -->
+            <div class="flex items-center space-x-3">
+                <div class="hidden sm:flex items-center space-x-2 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>System Status: <b class="text-white">Active</b></span>
+                </div>
 
-        <!-- Navigation Tabs -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex overflow-x-auto border-t border-slate-800 text-sm font-medium">
-            <button @click="activeTab = 'chat'" :class="activeTab === 'chat' ? 'border-sky-400 text-sky-400' : 'border-transparent text-slate-400 hover:text-slate-200'" class="py-2.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5">
-                💬 AI Agent Chat
-            </button>
-            <button @click="activeTab = 'room'" :class="activeTab === 'room' ? 'border-sky-400 text-sky-400' : 'border-transparent text-slate-400 hover:text-slate-200'" class="py-2.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5">
-                🏠 Room-Based House
-            </button>
-            <button @click="activeTab = 'residential'" :class="activeTab === 'residential' ? 'border-sky-400 text-sky-400' : 'border-transparent text-slate-400 hover:text-slate-200'" class="py-2.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5">
-                📐 Area Estimation (IS 456)
-            </button>
-            <button @click="activeTab = 'rebar'" :class="activeTab === 'rebar' ? 'border-sky-400 text-sky-400' : 'border-transparent text-slate-400 hover:text-slate-200'" class="py-2.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5">
-                🔩 Rebar Rod Schedule
-            </button>
-            <button @click="activeTab = 'bridge'" :class="activeTab === 'bridge' ? 'border-sky-400 text-sky-400' : 'border-transparent text-slate-400 hover:text-slate-200'" class="py-2.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5">
-                🌉 Bridge Piles & Scour
-            </button>
-            <button @click="activeTab = 'pool'" :class="activeTab === 'pool' ? 'border-sky-400 text-sky-400' : 'border-transparent text-slate-400 hover:text-slate-200'" class="py-2.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5">
-                🏊 Swimming Pool (IS 3370)
-            </button>
-            <button @click="activeTab = 'rates'" :class="activeTab === 'rates' ? 'border-sky-400 text-sky-400' : 'border-transparent text-slate-400 hover:text-slate-200'" class="py-2.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5">
-                📋 PWD Rates & Codes
-            </button>
+                <!-- Print / Export Button -->
+                <button @click="printEstimate()" class="inline-flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    <span>Print Report</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Main Workspace Area -->
+    <div class="flex-1 max-w-[1700px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         
-        <!-- Interactive Left / Form Column -->
-        <div class="lg:col-span-6 flex flex-col space-y-4">
+        <!-- Left Panel: AI Chat Assistant (50% Width) -->
+        <div class="flex flex-col space-y-4 w-full">
             
-            <!-- TAB 1: AI Chat -->
-            <div x-show="activeTab === 'chat'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col h-[650px]">
-                <div class="border-b pb-3 mb-3 flex justify-between items-center">
-                    <div>
-                        <h2 class="font-bold text-slate-800">Autonomous Civil Engineering Chatbot</h2>
-                        <p class="text-xs text-slate-500">Autonomous function calling into Assam PWD SOR calculators</p>
+            <!-- AI Chat Assistant Container -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 flex flex-col h-full min-h-[680px]">
+                <div class="border-b border-slate-100 pb-3 mb-3 flex justify-between items-center">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-sm shadow-sm">
+                            👷‍♂️
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                                <span>Er. BuildEstimate</span>
+                                <span class="bg-emerald-50 text-emerald-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-200">Online</span>
+                            </h2>
+                            <p class="text-[11px] text-slate-500">Senior Civil Structural Engineer • Assam PWD & IS Expert</p>
+                        </div>
                     </div>
-                    <button @click="clearChat()" class="text-xs text-red-500 hover:underline">Clear History</button>
+                    <button @click="clearChat()" class="text-xs text-slate-400 hover:text-red-600 transition flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <span>Clear</span>
+                    </button>
                 </div>
 
-                <!-- Chat history -->
-                <div class="flex-1 overflow-y-auto space-y-3 pr-2 text-sm" id="chat-box">
+                <!-- Chat Messages Scroll Area -->
+                <div class="flex-1 overflow-y-auto space-y-3.5 pr-2 dark-scroll" id="chat-box">
                     <template x-for="(msg, idx) in chatMessages" :key="idx">
-                        <div :class="msg.role === 'user' ? 'text-right' : 'text-left'">
-                            <div :class="msg.role === 'user' ? 'bg-sky-600 text-white inline-block max-w-[85%] rounded-2xl rounded-tr-none px-4 py-2.5 shadow-sm text-left' : 'bg-slate-100 text-slate-800 inline-block max-w-[95%] rounded-2xl rounded-tl-none px-4 py-2.5 border border-slate-200 text-left prose prose-sm'">
+                        <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start items-start space-x-2'">
+                            <!-- Avatar for assistant -->
+                            <template x-if="msg.role === 'assistant'">
+                                <div class="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs flex-shrink-0 mt-1 shadow-sm">
+                                    👷‍♂️
+                                </div>
+                            </template>
+                            <div :class="msg.role === 'user' ? 'bg-slate-900 text-white max-w-[85%] rounded-2xl rounded-tr-none px-4 py-2.5 text-xs sm:text-sm font-medium shadow-sm' : 'bg-slate-50 text-slate-800 max-w-[90%] rounded-2xl rounded-tl-none px-4 py-3 border border-slate-200/80 text-xs sm:text-sm prose prose-sm leading-relaxed'">
                                 <div x-html="renderMarkdown(msg.content)"></div>
-                                <template x-if="msg.tokens">
-                                    <div class="text-[10px] text-slate-400 mt-1">Tokens: <span x-text="msg.tokens"></span> | Model: <span x-text="msg.model"></span></div>
-                                </template>
                             </div>
                         </div>
                     </template>
-                    <div x-show="chatLoading" class="text-slate-400 text-xs italic flex items-center space-x-2">
-                        <div class="w-2 h-2 rounded-full bg-sky-500 animate-ping"></div>
-                        <span>BuildEstimate AI is computing quantities & running civil engineering formulas...</span>
+                    <div x-show="chatLoading" class="text-slate-500 text-xs italic flex items-center space-x-2.5 bg-slate-50 border border-slate-200/60 p-3 rounded-2xl w-fit">
+                        <div class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></div>
+                        <span>Er. BuildEstimate is working out the structural quantities and site advice...</span>
                     </div>
                 </div>
 
-                <!-- Quick Prompts -->
-                <div class="py-2 flex flex-wrap gap-1.5 border-t border-slate-100 mt-2">
-                    <button @click="sendPrompt('Estimate a 3 BHK house with 3 bathrooms and 1 balcony in Guwahati')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded">
-                        🏠 3 BHK House
+                <!-- Quick Query Starters (Practical Real-World Civil Structures) -->
+                <div class="py-2.5 flex flex-wrap gap-1.5 border-t border-slate-100 mt-2">
+                    <button @click="sendPrompt('Estimate complete materials for a G+1 duplex villa of 2400 sq.ft built-up area')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg transition font-medium">
+                        🏡 G+1 Duplex Villa (2400 sqft)
                     </button>
-                    <button @click="sendPrompt('Calculate sariya rods for 1500 sqft G+1 house in Seismic Zone V')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded">
-                        🔩 1500 sqft G+1 Sariya
+                    <button @click="sendPrompt('Calculate materials for a commercial shop building with ground floor footprint 1800 sq.ft across 2 floors')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg transition font-medium">
+                        🏪 Commercial Complex (G+1, 1800 sqft)
                     </button>
-                    <button @click="sendPrompt('Estimate deep foundation pile for Q=3500 cumecs and Lacey silt factor 1.0')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded">
-                        🌉 Bridge Pile (3500 cumecs)
+                    <button @click="sendPrompt('Estimate a 3000 sq.ft industrial storage warehouse with boundary plinth and heavy flooring slab')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg transition font-medium">
+                        🏭 Industrial Warehouse (3000 sqft)
                     </button>
-                    <button @click="sendPrompt('Swimming pool 12m length, 6m width, 1.8m depth per IS 3370')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded">
-                        🏊 IS 3370 Pool (12x6x1.8m)
+                    <button @click="sendPrompt('Estimate an underground RCC water storage reservoir 8m length, 4m width, and 2.5m depth per IS 3370')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg transition font-medium">
+                        💧 RCC Water Reservoir (8x4x2.5m)
+                    </button>
+                    <button @click="sendPrompt('Estimate 1200mm bored cast-in-situ RCC bridge pier piles for peak flood discharge Q=4200 cumecs')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg transition font-medium">
+                        🌉 Highway Bridge Pier Piles (4200 cumecs)
+                    </button>
+                    <button @click="sendPrompt('Calculate sariya rod schedule for 8500 kg total steel requirement for column footings and plinth beams')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg transition font-medium">
+                        🔩 Footing & Plinth Rebar (8.5 Tonnes)
                     </button>
                 </div>
 
-                <!-- Input box -->
-                <form @submit.prevent="submitChat()" class="flex space-x-2">
-                    <input type="text" x-model="chatInput" placeholder="Ask e.g.: Estimate materials and 12m sariya rods for a 3 BHK house..." 
-                           class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none" :disabled="chatLoading">
-                    <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50" :disabled="chatLoading || !chatInput.trim()">
-                        Send
+                <!-- Input Field -->
+                <form @submit.prevent="submitChat()" class="flex space-x-2 pt-1">
+                    <input type="text" x-model="chatInput" placeholder="Ask e.g. G+1 duplex villa, warehouse, commercial complex, water tank..." 
+                           class="flex-1 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-slate-900 focus:border-slate-900 focus:outline-none transition" :disabled="chatLoading">
+                    <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition disabled:opacity-50 flex items-center gap-1.5 shadow-sm" :disabled="chatLoading || !chatInput.trim()">
+                        <span>Send</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </button>
                 </form>
             </div>
-
-            <!-- TAB 2: Room-Based House Form -->
-            <div x-show="activeTab === 'room'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
-                <div class="border-b pb-2">
-                    <h2 class="font-bold text-slate-800">Room-Based Residential Estimator</h2>
-                    <p class="text-xs text-slate-500">Computes carpet area, +22% NBC circulation allowance, full steel rod counts & materials</p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Bedrooms / Main Rooms</label>
-                        <input type="number" x-model.number="formRoom.rooms" min="1" max="10" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Toilets / Bathrooms</label>
-                        <input type="number" x-model.number="formRoom.toilets" min="0" max="10" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Balconies</label>
-                        <input type="number" x-model.number="formRoom.balconies" min="0" max="10" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Floors (G=1, G+1=2)</label>
-                        <input type="number" x-model.number="formRoom.floors" min="1" max="5" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                </div>
-
-                <div class="space-y-2 text-sm pt-2">
-                    <label class="flex items-center space-x-2">
-                        <input type="checkbox" x-model="formRoom.include_living_dining" class="rounded text-sky-600">
-                        <span>Include Standard Living / Dining Hall (220 sq.ft)</span>
-                    </label>
-                    <label class="flex items-center space-x-2">
-                        <input type="checkbox" x-model="formRoom.include_kitchen" class="rounded text-sky-600">
-                        <span>Include Modular Kitchen (90 sq.ft)</span>
-                    </label>
-                    <label class="flex items-center space-x-2">
-                        <input type="checkbox" x-model="formRoom.seismic_zone_v" class="rounded text-sky-600">
-                        <span class="font-medium text-amber-700">Seismic Zone V (IS 13920 Ductile Detailing)</span>
-                    </label>
-                </div>
-
-                <button @click="calculateDirect('/api/v1/estimate/by-rooms', formRoom)" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 rounded-lg text-sm transition">
-                    Run Room-Based Calculation
-                </button>
-            </div>
-
-            <!-- TAB 3: Direct Area Residential Form -->
-            <div x-show="activeTab === 'residential'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
-                <div class="border-b pb-2">
-                    <h2 class="font-bold text-slate-800">Built-Up Area Residential Estimator (IS 456)</h2>
-                    <p class="text-xs text-slate-500">Standard PWD item rates (M25 concrete, Fe500D steel, 1st class bricks, plaster, tiles)</p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Built-Up Area per Floor (sq.ft)</label>
-                        <input type="number" x-model.number="formResidential.built_up_area_sqft" min="100" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Floors (Levels)</label>
-                        <input type="number" x-model.number="formResidential.floors" min="1" max="5" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                </div>
-
-                <label class="flex items-center space-x-2 text-sm pt-1">
-                    <input type="checkbox" x-model="formResidential.seismic_zone_v" class="rounded text-sky-600">
-                    <span class="font-medium text-amber-700">Seismic Zone V Confinement Links (4.5 kg/sqft vs 3.8 kg/sqft)</span>
-                </label>
-
-                <button @click="calculateDirect('/api/v1/estimate/residential', formResidential)" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 rounded-lg text-sm transition">
-                    Run Area-Based Calculation
-                </button>
-            </div>
-
-            <!-- TAB 4: Rebar Schedule Form -->
-            <div x-show="activeTab === 'rebar'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
-                <div class="border-b pb-2">
-                    <h2 class="font-bold text-slate-800">12-Meter Commercial Rebar Rod Calculator</h2>
-                    <p class="text-xs text-slate-500">Converts total tonnage into 8mm-25mm commercial 12m bars and bundles</p>
-                </div>
-
-                <div class="space-y-4 text-sm">
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Total Steel Requirement (kg)</label>
-                        <input type="number" x-model.number="formRebar.total_steel_kg" min="10" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Application Type</label>
-                        <select x-model="formRebar.application" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                            <option value="residential">Residential House (₹82,000 / MT)</option>
-                            <option value="bridge">Bridge Works (₹86,500 / MT)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <button @click="calculateDirect('/api/v1/estimate/rebar-schedule', formRebar)" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 rounded-lg text-sm transition">
-                    Generate Rod Schedule
-                </button>
-            </div>
-
-            <!-- TAB 5: Bridge Pile Form -->
-            <div x-show="activeTab === 'bridge'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
-                <div class="border-b pb-2">
-                    <h2 class="font-bold text-slate-800">Bridge Bored Piles & Lacey's Scour Depth</h2>
-                    <p class="text-xs text-slate-500">IRC:78-2014 & MoRTH Section 2200 deep foundation estimation</p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Peak Flood Q (cumecs)</label>
-                        <input type="number" x-model.number="formBridge.peak_discharge_Q" min="10" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Lacey's Silt Factor (f)</label>
-                        <input type="number" step="0.1" x-model.number="formBridge.lacey_silt_factor_f" min="0.1" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Pile Diameter (mm)</label>
-                        <input type="number" x-model.number="formBridge.pile_diameter_mm" step="100" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Number of Piles</label>
-                        <input type="number" x-model.number="formBridge.num_piles" min="1" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Superstructure Span (m)</label>
-                        <input type="number" x-model.number="formBridge.superstructure_span_m" min="5" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Water Depth Above Bed (m)</label>
-                        <input type="number" step="0.5" x-model.number="formBridge.water_depth_above_bed_m" min="0" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                </div>
-
-                <button @click="calculateDirect('/api/v1/estimate/bridge-pile', formBridge)" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 rounded-lg text-sm transition">
-                    Calculate Pile & Scour Depth
-                </button>
-            </div>
-
-            <!-- TAB 6: Swimming Pool Form -->
-            <div x-show="activeTab === 'pool'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
-                <div class="border-b pb-2">
-                    <h2 class="font-bold text-slate-800">IS 3370 Swimming Pool & Water Tank</h2>
-                    <p class="text-xs text-slate-500">Crack width &lt;= 0.1mm, 20x10mm swellable waterstop & dual-layer waterproofing</p>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3 text-sm">
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Length (m)</label>
-                        <input type="number" step="0.5" x-model.number="formPool.length_m" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Width (m)</label>
-                        <input type="number" step="0.5" x-model.number="formPool.width_m" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                    <div>
-                        <label class="block font-medium text-slate-700 mb-1">Depth (m)</label>
-                        <input type="number" step="0.1" x-model.number="formPool.depth_m" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                    </div>
-                    <div class="col-span-3 grid grid-cols-2 gap-3 pt-2">
-                        <div>
-                            <label class="block font-medium text-slate-700 mb-1">Wall Thickness (m)</label>
-                            <input type="number" step="0.05" x-model.number="formPool.wall_thickness_m" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                        </div>
-                        <div>
-                            <label class="block font-medium text-slate-700 mb-1">Base Raft Thickness (m)</label>
-                            <input type="number" step="0.05" x-model.number="formPool.raft_thickness_m" class="w-full border rounded-lg px-3 py-2 focus:ring-1 focus:ring-sky-500">
-                        </div>
-                    </div>
-                </div>
-
-                <button @click="calculateDirect('/api/v1/estimate/swimming-pool', formPool)" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 rounded-lg text-sm transition">
-                    Estimate Pool Quantities
-                </button>
-            </div>
-
-            <!-- TAB 7: Rates Lookup -->
-            <div x-show="activeTab === 'rates'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
-                <div class="border-b pb-2 flex justify-between items-center">
-                    <div>
-                        <h2 class="font-bold text-slate-800">Assam PWD Schedule of Rates (SOR 2025-2026)</h2>
-                        <p class="text-xs text-slate-500">Official reference item rates used in calculations</p>
-                    </div>
-                    <select x-model="ratesCategory" @change="fetchRates()" class="border rounded-lg text-xs px-2.5 py-1">
-                        <option value="all">All Rates</option>
-                        <option value="residential">Residential Items</option>
-                        <option value="bridge">Bridge Items</option>
-                        <option value="liquid_retaining">Liquid Retaining Items</option>
-                        <option value="standards">Rebar Weights & Standards</option>
-                    </select>
-                </div>
-
-                <button @click="fetchRates()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium py-2 rounded-lg text-sm transition">
-                    Fetch Rates from /api/v1/rates
-                </button>
-            </div>
-
         </div>
 
-        <!-- Output / Results / Dart API Inspector Column -->
-        <div class="lg:col-span-6 flex flex-col space-y-4">
+        <!-- Right Panel: Estimation Summary & Bill of Quantities (50% Width) -->
+        <div class="flex flex-col space-y-4 w-full" id="printable-area">
             
-            <!-- Result Cards View -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-                <div class="flex items-center justify-between border-b pb-3 mb-4">
-                    <div class="flex items-center space-x-2">
-                        <span class="w-2.5 h-2.5 rounded-full" :class="calcLoading ? 'bg-amber-400 animate-ping' : (lastResult ? 'bg-emerald-500' : 'bg-slate-300')"></span>
-                        <h3 class="font-bold text-slate-800">Engineered Calculation Summary</h3>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 flex flex-col h-full min-h-[680px]">
+                
+                <!-- Report Header Bar -->
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-3 h-3 rounded-full" :class="calcLoading ? 'bg-amber-400 animate-ping' : (lastResult ? 'bg-emerald-500' : 'bg-slate-300')"></div>
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-base" x-text="lastResult ? (lastResult.project_type || 'Estimation Summary') : 'Civil Estimation Report'"></h3>
+                            <p class="text-xs text-slate-500" x-text="lastResult && lastResult.scope ? lastResult.scope : 'Engineered Bill of Quantities (BOQ)'"></p>
+                        </div>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <button @click="viewMode = 'visual'" :class="viewMode === 'visual' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700'" class="px-2.5 py-1 rounded text-xs font-medium">Visual</button>
-                        <button @click="viewMode = 'json'" :class="viewMode === 'json' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700'" class="px-2.5 py-1 rounded text-xs font-medium">Dart JSON Payload</button>
-                    </div>
+
+                    <template x-if="lastResult">
+                        <div class="text-right">
+                            <span class="text-[10px] text-slate-400 block font-medium uppercase tracking-wider">Governing Specification</span>
+                            <span class="text-xs font-semibold text-slate-700">Assam PWD SOR (2025–26)</span>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- Empty State -->
-                <div x-show="!lastResult && !calcLoading" class="text-center py-12 text-slate-400">
-                    <span class="text-4xl block mb-2">📊</span>
-                    <p class="text-sm">Run a calculator or ask the AI Agent to view the engineered results.</p>
+                <div x-show="!lastResult && !calcLoading" class="flex-1 flex flex-col items-center justify-center text-center py-16 text-slate-400">
+                    <div class="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-3xl mb-3 shadow-inner">
+                        🏗️
+                    </div>
+                    <h4 class="font-semibold text-slate-700 text-sm mb-1">No Estimate Generated Yet</h4>
+                    <p class="text-xs text-slate-400 max-w-sm">Use the forms on the left or chat with BuildEstimate AI to calculate site quantities, rod counts, and costs.</p>
                 </div>
 
                 <!-- Loading State -->
-                <div x-show="calcLoading" class="text-center py-12 text-slate-400">
-                    <div class="w-6 h-6 border-2 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                    <p class="text-sm">Executing Indian standard calculation...</p>
+                <div x-show="calcLoading" class="flex-1 flex flex-col items-center justify-center text-center py-16 text-slate-400">
+                    <div class="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                    <h4 class="font-semibold text-slate-700 text-sm">Processing Engineering Formulas</h4>
+                    <p class="text-xs text-slate-400">Computing weights, rod breakdown, and schedule of rates...</p>
                 </div>
 
-                <!-- Visual Output Display -->
-                <div x-show="lastResult && viewMode === 'visual'" class="space-y-4 text-sm">
+                <!-- Active Estimation Output -->
+                <div x-show="lastResult && !calcLoading" class="space-y-6 flex-1 text-slate-800">
                     
-                    <!-- Quick KPI metrics -->
+                    <!-- KPI Headline Cards -->
                     <template x-if="lastResult.cost_summary">
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            <div class="bg-slate-50 border border-slate-200 rounded-lg p-3">
-                                <span class="text-xs text-slate-500 block">Total Est. Cost</span>
-                                <span class="text-lg font-bold text-emerald-600" x-text="formatINR(lastResult.cost_summary.total_estimated_materials_cost_inr)"></span>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/80 rounded-2xl p-4">
+                                <span class="text-xs font-semibold text-emerald-800 block">Total Estimated Cost</span>
+                                <span class="text-2xl font-black text-emerald-700 tracking-tight" x-text="formatINR(lastResult.cost_summary.total_estimated_materials_cost_inr)"></span>
+                                <span class="text-[10px] text-emerald-600/90 block mt-0.5">Assam PWD Material Cost</span>
                             </div>
-                            <div class="bg-slate-50 border border-slate-200 rounded-lg p-3">
-                                <span class="text-xs text-slate-500 block">Cost / sq.ft</span>
-                                <span class="text-lg font-bold text-slate-800" x-text="'₹' + lastResult.cost_summary.cost_per_sqft_inr"></span>
+                            <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                                <span class="text-xs font-semibold text-slate-600 block">Cost per Sq.Ft</span>
+                                <span class="text-2xl font-black text-slate-900 tracking-tight" x-text="'₹' + lastResult.cost_summary.cost_per_sqft_inr"></span>
+                                <span class="text-[10px] text-slate-500 block mt-0.5">Built-up Area Basis</span>
                             </div>
-                            <div class="bg-slate-50 border border-slate-200 rounded-lg p-3">
-                                <span class="text-xs text-slate-500 block">Total 12m Sariya Rods</span>
-                                <span class="text-lg font-bold text-sky-600" x-text="lastResult.indian_market_materials ? lastResult.indian_market_materials.sariya_tmt_steel.total_12m_commercial_rods : (lastResult.total_standard_12m_rods || 'N/A')"></span>
+                            <div class="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4">
+                                <span class="text-xs font-semibold text-amber-800 block">Total 12m Sariya Rods</span>
+                                <span class="text-2xl font-black text-amber-700 tracking-tight" x-text="lastResult.indian_market_materials ? lastResult.indian_market_materials.sariya_tmt_steel.total_12m_commercial_rods : (lastResult.total_standard_12m_rods || 'N/A')"></span>
+                                <span class="text-[10px] text-amber-700/80 block mt-0.5">Grade Fe 500D (IS 1786)</span>
                             </div>
                         </div>
                     </template>
 
-                    <!-- Rebar Bar Schedule Table -->
+                    <!-- Rebar Sariya Schedule Table -->
                     <template x-if="lastResult.rebar_breakdown || lastResult.bar_schedule">
-                        <div>
-                            <h4 class="font-bold text-slate-800 mb-2 flex items-center gap-1.5 text-xs uppercase tracking-wide">
-                                <span>🔩</span> Sariya Schedule (Standard 12-Metre Rods)
-                            </h4>
-                            <div class="overflow-x-auto border rounded-lg">
+                        <div class="space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                                    <span>🔩</span> Sariya Schedule (Commercial 12-Metre Rods)
+                                </h4>
+                                <span class="text-[11px] text-slate-500">
+                                    Binding Wire: <b class="text-slate-700" x-text="(lastResult.rebar_breakdown ? lastResult.rebar_breakdown.binding_wire_kg : lastResult.binding_wire_kg) + ' kg'"></b>
+                                </span>
+                            </div>
+
+                            <div class="overflow-x-auto border border-slate-200 rounded-xl">
                                 <table class="w-full text-left text-xs border-collapse">
-                                    <thead class="bg-slate-50 border-b">
+                                    <thead class="bg-slate-50/80 border-b border-slate-200">
                                         <tr>
-                                            <th class="p-2 font-semibold">Diameter</th>
-                                            <th class="p-2 font-semibold">Weight (kg)</th>
-                                            <th class="p-2 font-semibold text-sky-700">12m Rods</th>
-                                            <th class="p-2 font-semibold">Bundles</th>
-                                            <th class="p-2 font-semibold">Structural Application</th>
+                                            <th class="py-2.5 px-3 font-semibold text-slate-700">Bar Diameter</th>
+                                            <th class="py-2.5 px-3 font-semibold text-slate-700">Weight (kg)</th>
+                                            <th class="py-2.5 px-3 font-bold text-amber-700">12m Rods</th>
+                                            <th class="py-2.5 px-3 font-semibold text-slate-700">Bundles</th>
+                                            <th class="py-2.5 px-3 font-semibold text-slate-700">Structural Role</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody class="divide-y divide-slate-100">
                                         <template x-for="item in (lastResult.rebar_breakdown ? lastResult.rebar_breakdown.bar_schedule : lastResult.bar_schedule)" :key="item.diameter_mm">
-                                            <tr class="border-b last:border-0 hover:bg-slate-50">
-                                                <td class="p-2 font-bold" x-text="item.diameter_mm + ' mm'"></td>
-                                                <td class="p-2" x-text="item.total_weight_kg + ' kg'"></td>
-                                                <td class="p-2 font-bold text-sky-700" x-text="item.standard_12m_rods_count"></td>
-                                                <td class="p-2" x-text="item.approx_bundles + ' bndl'"></td>
-                                                <td class="p-2 text-slate-500 text-[11px]" x-text="item.typical_use"></td>
+                                            <tr class="hover:bg-slate-50/50 transition">
+                                                <td class="py-2.5 px-3 font-bold text-slate-900 flex items-center gap-1.5">
+                                                    <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                                                    <span x-text="item.diameter_mm + ' mm'"></span>
+                                                </td>
+                                                <td class="py-2.5 px-3 text-slate-700" x-text="item.total_weight_kg + ' kg'"></td>
+                                                <td class="py-2.5 px-3 font-bold text-amber-700 text-sm" x-text="item.standard_12m_rods_count"></td>
+                                                <td class="py-2.5 px-3 text-slate-600" x-text="item.approx_bundles + ' bundles'"></td>
+                                                <td class="py-2.5 px-3 text-slate-500 text-[11px]" x-text="item.typical_use"></td>
                                             </tr>
                                         </template>
                                     </tbody>
@@ -426,86 +288,169 @@
                         </div>
                     </template>
 
-                    <!-- Indian Market Materials Breakdown -->
+                    <!-- Comprehensive Lifecycle Materials Inventory -->
+                    <template x-if="lastResult.lifecycle_materials_inventory">
+                        <div class="space-y-3 pt-2" x-data="{ activePhase: 'phase_1_structural' }">
+                            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                                <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                                    <span>📑</span> Complete Bill of Materials (BOM Lifecycle)
+                                </h4>
+                                <!-- Phase selector pills -->
+                                <div class="flex space-x-1 text-[11px]">
+                                    <button @click="activePhase = 'phase_1_structural'" :class="activePhase === 'phase_1_structural' ? 'bg-slate-900 text-white font-semibold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-2.5 py-1 rounded-lg transition">Structural</button>
+                                    <button @click="activePhase = 'phase_2_masonry_wet'" :class="activePhase === 'phase_2_masonry_wet' ? 'bg-slate-900 text-white font-semibold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-2.5 py-1 rounded-lg transition">Masonry</button>
+                                    <button @click="activePhase = 'phase_3_finishes_waterproofing'" :class="activePhase === 'phase_3_finishes_waterproofing' ? 'bg-slate-900 text-white font-semibold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-2.5 py-1 rounded-lg transition">Finishes</button>
+                                    <button @click="activePhase = 'phase_4_fixtures_mep'" :class="activePhase === 'phase_4_fixtures_mep' ? 'bg-slate-900 text-white font-semibold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'" class="px-2.5 py-1 rounded-lg transition">Openings & MEP</button>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                                <table class="w-full text-left text-xs border-collapse">
+                                    <thead class="bg-slate-50/80 border-b border-slate-200">
+                                        <tr>
+                                            <th class="py-2.5 px-3 font-semibold text-slate-700">Material Specification</th>
+                                            <th class="py-2.5 px-3 font-bold text-amber-700">Calculated Quantity</th>
+                                            <th class="py-2.5 px-3 font-semibold text-slate-700">Market Packaging / Form</th>
+                                            <th class="py-2.5 px-3 font-semibold text-slate-700">Standard / IS Code</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <template x-for="item in lastResult.lifecycle_materials_inventory[activePhase].items" :key="item.material">
+                                            <tr class="hover:bg-slate-50/50 transition">
+                                                <td class="py-2 px-3 font-medium text-slate-900" x-text="item.material"></td>
+                                                <td class="py-2 px-3 font-bold text-amber-700 text-sm" x-text="item.quantity"></td>
+                                                <td class="py-2 px-3 text-slate-600" x-text="item.packaging"></td>
+                                                <td class="py-2 px-3 text-slate-400 font-mono text-[11px]" x-text="item.code"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Site Materials (Indian Units: Bags, Brass, CFT) -->
                     <template x-if="lastResult.indian_market_materials">
-                        <div>
-                            <h4 class="font-bold text-slate-800 mb-2 flex items-center gap-1.5 text-xs uppercase tracking-wide">
-                                <span>📦</span> Site Materials (Bags, Brass, CFT)
+                        <div class="space-y-2.5">
+                            <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                                <span>📦</span> Site Materials & Packaging
                             </h4>
-                            <div class="grid grid-cols-2 gap-2 text-xs">
-                                <div class="p-2.5 bg-slate-50 border rounded-lg">
-                                    <span class="font-semibold text-slate-700 block">Cement Bags (50kg)</span>
-                                    <span class="text-base font-bold text-sky-700" x-text="lastResult.indian_market_materials.cement_bags_50kg.total_bags + ' Bags'"></span>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                                <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                                    <span class="text-slate-500 font-medium block">Cement (50kg)</span>
+                                    <span class="text-lg font-bold text-slate-900 mt-0.5 block" x-text="lastResult.indian_market_materials.cement_bags_50kg.total_bags"></span>
+                                    <span class="text-[10px] text-slate-400">Bags (OPC / PPC)</span>
                                 </div>
-                                <div class="p-2.5 bg-slate-50 border rounded-lg">
-                                    <span class="font-semibold text-slate-700 block">Sand (Reti / M-Sand)</span>
-                                    <span class="text-base font-bold text-amber-700" x-text="lastResult.indian_market_materials.sand_reti_msand.volume_brass + ' Brass (' + lastResult.indian_market_materials.sand_reti_msand.volume_cft + ' CFT)'"></span>
+                                <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                                    <span class="text-slate-500 font-medium block">Sand (Reti / M-Sand)</span>
+                                    <span class="text-lg font-bold text-slate-900 mt-0.5 block" x-text="lastResult.indian_market_materials.sand_reti_msand.volume_brass + ' Brass'"></span>
+                                    <span class="text-[10px] text-slate-400" x-text="lastResult.indian_market_materials.sand_reti_msand.volume_cft + ' CFT'"></span>
                                 </div>
-                                <div class="p-2.5 bg-slate-50 border rounded-lg">
-                                    <span class="font-semibold text-slate-700 block">Coarse Aggregate (Rori/Gitti)</span>
-                                    <span class="text-base font-bold text-slate-700" x-text="lastResult.indian_market_materials.coarse_aggregate_rori_gitti.volume_brass + ' Brass (' + lastResult.indian_market_materials.coarse_aggregate_rori_gitti.volume_cft + ' CFT)'"></span>
+                                <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                                    <span class="text-slate-500 font-medium block">Aggregate (Rori)</span>
+                                    <span class="text-lg font-bold text-slate-900 mt-0.5 block" x-text="lastResult.indian_market_materials.coarse_aggregate_rori_gitti.volume_brass + ' Brass'"></span>
+                                    <span class="text-[10px] text-slate-400" x-text="lastResult.indian_market_materials.coarse_aggregate_rori_gitti.volume_cft + ' CFT'"></span>
                                 </div>
-                                <div class="p-2.5 bg-slate-50 border rounded-lg">
-                                    <span class="font-semibold text-slate-700 block">1st Class Bricks (IS 2212)</span>
-                                    <span class="text-base font-bold text-red-700" x-text="lastResult.indian_market_materials.first_class_bricks.total_bricks + ' Bricks'"></span>
+                                <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                                    <span class="text-slate-500 font-medium block">1st Class Bricks</span>
+                                    <span class="text-lg font-bold text-slate-900 mt-0.5 block" x-text="lastResult.indian_market_materials.first_class_bricks.total_bricks"></span>
+                                    <span class="text-[10px] text-slate-400">IS 2212 Clay/Flyash</span>
                                 </div>
                             </div>
                         </div>
                     </template>
 
-                    <!-- Bridge Pile Specifics -->
+                    <!-- Architectural Area Configuration (When Available) -->
+                    <template x-if="lastResult.architectural_configuration">
+                        <div class="p-4 bg-slate-50 border border-slate-200/80 rounded-xl text-xs space-y-2">
+                            <span class="font-bold text-slate-900 block text-xs uppercase tracking-wide">📐 Architectural Area Breakdown</span>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-slate-600">
+                                <div>Carpet Area / Floor: <b class="text-slate-900" x-text="lastResult.architectural_configuration.carpet_area_per_floor_sqft + ' sq.ft'"></b></div>
+                                <div>Wall & Circulation (+22%): <b class="text-slate-900" x-text="lastResult.architectural_configuration.walls_and_circulation_sqft + ' sq.ft'"></b></div>
+                                <div>Total Built-Up Area: <b class="text-slate-900" x-text="lastResult.architectural_configuration.total_built_up_area_all_floors_sqft + ' sq.ft'"></b></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Bridge Pile Specific Details -->
                     <template x-if="lastResult.scour_hydraulics">
-                        <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs space-y-1">
-                            <span class="font-bold text-amber-900 block">Lacey Scour & Deep Pile Results:</span>
-                            <div>Mean Scour Depth (R): <b x-text="lastResult.scour_hydraulics.mean_scour_depth_R_metres + ' m'"></b></div>
-                            <div>Max Scour Under Pier (2*R): <b x-text="lastResult.scour_hydraulics.max_scour_depth_under_pier_Dpier_metres + ' m'"></b></div>
-                            <div>Total Foundation Linear Drilling: <b x-text="lastResult.pile_geometry.total_drilled_linear_metres + ' m'"></b></div>
-                            <div>Total Foundation Cost: <b class="text-emerald-700" x-text="formatINR(lastResult.cost_breakdown.total_foundation_cost_inr)"></b></div>
+                        <div class="space-y-3">
+                            <div class="p-4 bg-amber-50/70 border border-amber-200/80 rounded-xl text-xs space-y-2">
+                                <span class="font-bold text-amber-950 block uppercase tracking-wide">🌉 Lacey Scour & Deep Foundation Results</span>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-amber-900">
+                                    <div>Mean Scour Depth (R): <b x-text="lastResult.scour_hydraulics.mean_scour_depth_R_metres + ' m'"></b></div>
+                                    <div>Max Pier Scour (2*R): <b x-text="lastResult.scour_hydraulics.max_scour_depth_under_pier_Dpier_metres + ' m'"></b></div>
+                                    <div>Total Linear Boring: <b x-text="lastResult.pile_geometry.total_drilled_linear_metres + ' m'"></b></div>
+                                </div>
+                            </div>
+                            <template x-if="lastResult.cost_breakdown">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-xs">
+                                        <span class="text-slate-500 block">Boring & Piling</span>
+                                        <span class="text-base font-bold text-slate-800" x-text="formatINR(lastResult.cost_breakdown.boring_piling_inr)"></span>
+                                    </div>
+                                    <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-xs">
+                                        <span class="text-slate-500 block">Submerged Concrete</span>
+                                        <span class="text-base font-bold text-slate-800" x-text="formatINR(lastResult.cost_breakdown.concrete_m3_inr)"></span>
+                                    </div>
+                                    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs">
+                                        <span class="text-emerald-700 block font-semibold">Total Foundation Cost</span>
+                                        <span class="text-base font-bold text-emerald-800" x-text="formatINR(lastResult.cost_breakdown.total_foundation_cost_inr)"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Swimming Pool & Water Retaining Specific Details -->
+                    <template x-if="lastResult.dimensions && lastResult.concrete_and_waterproofing">
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                                <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                                    <span class="text-slate-500 block">Water Capacity</span>
+                                    <span class="text-base font-bold text-slate-900" x-text="(lastResult.dimensions.capacity_litres ? lastResult.dimensions.capacity_litres.toLocaleString() : 0) + ' L'"></span>
+                                </div>
+                                <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                                    <span class="text-slate-500 block">Wetted Area</span>
+                                    <span class="text-base font-bold text-slate-900" x-text="lastResult.dimensions.wetted_surface_area_m2 + ' m²'"></span>
+                                </div>
+                                <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                                    <span class="text-slate-500 block">Waterstop Joint</span>
+                                    <span class="text-base font-bold text-amber-700" x-text="lastResult.dimensions.construction_joint_length_m + ' m'"></span>
+                                </div>
+                                <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                                    <span class="text-emerald-700 block font-semibold">Total Est. Cost</span>
+                                    <span class="text-base font-bold text-emerald-800" x-text="formatINR(lastResult.cost_breakdown ? lastResult.cost_breakdown.total_cost_inr : 0)"></span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-sky-50/70 border border-sky-200/80 rounded-xl text-xs space-y-1 text-sky-950">
+                                <div><b>Waterstop:</b> <span x-text="lastResult.concrete_and_waterproofing.waterstop_spec"></span></div>
+                                <div><b>Waterproofing:</b> <span x-text="lastResult.concrete_and_waterproofing.dual_layer_waterproofing_spec"></span></div>
+                            </div>
                         </div>
                     </template>
 
                 </div>
 
-                <!-- JSON / Dart Contract Display -->
-                <div x-show="lastResult && viewMode === 'json'" class="relative">
-                    <button @click="copyJson()" class="absolute right-2 top-2 bg-slate-700 hover:bg-slate-600 text-white text-[10px] px-2 py-1 rounded">
-                        Copy JSON for Dart Model
-                    </button>
-                    <pre class="bg-slate-900 text-slate-200 text-xs p-4 rounded-lg overflow-x-auto max-h-[500px]" x-text="JSON.stringify(lastResult, null, 2)"></pre>
-                </div>
-
-            </div>
-
-            <!-- Dart API Integration Help Box -->
-            <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 text-xs text-sky-900 space-y-2">
-                <div class="flex items-center space-x-2 font-semibold">
-                    <span>🎯</span>
-                    <span>Dart / Flutter Endpoint Contract</span>
-                </div>
-                <p>All endpoints accept and return pure standard JSON matching this Laravel API backend:</p>
-                <div class="font-mono bg-white p-2.5 rounded border border-sky-200 space-y-1 text-[11px] text-slate-700">
-                    <div>POST /api/v1/chat &rarr; ChatRequest & { messages: [...] }</div>
-                    <div>POST /api/v1/estimate/by-rooms &rarr; { rooms: 3, toilets: 3, floors: 1 }</div>
-                    <div>POST /api/v1/estimate/residential &rarr; { built_up_area_sqft: 1200 }</div>
-                    <div>POST /api/v1/estimate/rebar-schedule &rarr; { total_steel_kg: 5400 }</div>
-                    <div>POST /api/v1/estimate/bridge-pile &rarr; { peak_discharge_Q: 2500 }</div>
-                </div>
             </div>
 
         </div>
 
-    </main>
+    </div>
+
+    <!-- Application Footer -->
+    <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
+        BuildEstimate AI • Calibrated with Assam PWD Schedule of Rates (SOR 2025–2026) & Indian Standards
+    </footer>
 
     <script>
-        function dashboardApp() {
+        function buildEstimateApp() {
             return {
                 activeTab: 'chat',
-                viewMode: 'visual',
-                customApiKey: '',
                 calcLoading: false,
                 lastResult: null,
 
-                // Forms data
+                // Forms
                 formRoom: {
                     rooms: 3,
                     toilets: 3,
@@ -539,7 +484,6 @@
                     wall_thickness_m: 0.25,
                     raft_thickness_m: 0.30
                 },
-                ratesCategory: 'all',
 
                 // Chat state
                 chatInput: '',
@@ -547,7 +491,7 @@
                 chatMessages: [
                     {
                         role: 'assistant',
-                        content: '🙏 **Namaste! I am BuildEstimate AI** — your Indian Civil Structural & Cost Estimation Engineer calibrated with Assam PWD SOR 2025-2026.\n\nAsk me about room configurations (e.g. 3 BHK with 3 toilets), built-up area estimations, 12m standard Sariya (rebar) schedules, bridge bored piles, or swimming pools!'
+                        content: "👋 **Hello and welcome! I am Er. BuildEstimate**, your Senior Civil Structural Engineer.\n\nI can help you estimate your complete building project — whether it's a **3 BHK house**, a custom floor plan, deep foundation piles, or swimming pools.\n\nSimply tell me what you'd like to build (e.g. *\"3 BHK house in Guwahati\"* or *\"1500 sqft residential duplex\"*), and I will calculate the quantities and guide you through the materials on the right!"
                     }
                 ],
 
@@ -570,9 +514,8 @@
                     return '₹' + num.toLocaleString('en-IN');
                 },
 
-                copyJson() {
-                    navigator.clipboard.writeText(JSON.stringify(this.lastResult, null, 2));
-                    alert('Copied JSON payload to clipboard!');
+                printEstimate() {
+                    window.print();
                 },
 
                 async calculateDirect(endpoint, payload) {
@@ -586,21 +529,7 @@
                         const data = await res.json();
                         this.lastResult = data;
                     } catch (e) {
-                        alert('API Error: ' + e.message);
-                    } finally {
-                        this.calcLoading = false;
-                    }
-                },
-
-                async fetchRates() {
-                    this.calcLoading = true;
-                    try {
-                        const res = await fetch(`/api/v1/rates?category=${this.ratesCategory}`);
-                        const data = await res.json();
-                        this.lastResult = data;
-                        this.viewMode = 'json';
-                    } catch (e) {
-                        alert('Rates Fetch Error: ' + e.message);
+                        alert('Calculation Error: ' + e.message);
                     } finally {
                         this.calcLoading = false;
                     }
@@ -636,7 +565,7 @@
                     try {
                         const payload = {
                             messages: this.chatMessages.map(m => ({ role: m.role, content: m.content })),
-                            api_key: this.customApiKey || null
+                            active_estimate: this.lastResult || null
                         };
 
                         const res = await fetch('/api/v1/chat', {
@@ -648,20 +577,17 @@
                         const data = await res.json();
                         this.chatMessages.push({
                             role: 'assistant',
-                            content: data.response || 'No response returned.',
-                            tokens: data.tokens_used,
-                            model: data.model_used
+                            content: data.response || 'No response returned.'
                         });
 
                         if (data.tool_results && Object.keys(data.tool_results).length > 0) {
-                            // Extract first tool result to show in the visual summary
                             const firstTool = Object.values(data.tool_results)[0];
                             this.lastResult = firstTool;
                         }
                     } catch (e) {
                         this.chatMessages.push({
                             role: 'assistant',
-                            content: '⚠️ **Error:** Unable to connect to `/api/v1/chat` endpoint. ' + e.message
+                            content: '⚠️ **Error:** Unable to connect to estimation service. ' + e.message
                         });
                     } finally {
                         this.chatLoading = false;
@@ -676,4 +602,3 @@
     </script>
 </body>
 </html>
-
