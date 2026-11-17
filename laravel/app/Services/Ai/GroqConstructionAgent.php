@@ -2,10 +2,14 @@
 
 namespace App\Services\Ai;
 
+use App\Services\Estimation\BoundaryWallEstimator;
 use App\Services\Estimation\BridgePileService;
+use App\Services\Estimation\CommercialBuildingEstimator;
 use App\Services\Estimation\RebarScheduleService;
 use App\Services\Estimation\ResidentialEstimator;
+use App\Services\Estimation\RoadAndDrainageEstimator;
 use App\Services\Estimation\RoomBasedEstimator;
+use App\Services\Estimation\WarehousePebEstimator;
 use App\Services\Estimation\WaterRetainingService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -13,17 +17,141 @@ use Illuminate\Support\Facades\Log;
 class GroqConstructionAgent
 {
     protected const CONSTRUCTION_KEYWORDS = [
-        'house', 'building', 'home', 'ghar', 'makaan', 'room', 'kamra', 'bhk', 'bedroom',
-        'toilet', 'bathroom', 'balcony', 'kitchen', 'flat', 'plot', 'steel', 'sariya', 'rebar',
-        'rod', 'tmt', 'fe500', 'fe500d', 'fe550', 'cement', 'bora', 'bag', 'concrete', 'rcc',
-        'm20', 'm25', 'm30', 'm35', 'm40', 'm45', 'brick', 'eent', 'plaster', 'plastering',
-        'flooring', 'tile', 'slab', 'chhat', 'dhalai', 'beam', 'column', 'pillar', 'footing',
-        'plinth', 'lintel', 'foundation', 'bored', 'pile', 'bridge', 'pier', 'scour', 'lacey',
-        'pool', 'tank', 'swimming', 'waterstop', 'waterproof', 'waterproofing', 'cost', 'estimate',
-        'estimation', 'budget', 'rate', 'sor', 'pwd', 'cpwd', 'is 456', 'is 13920', 'is 1786',
-        'is 3370', 'morth', 'irc', 'assam', 'guwahati', 'kamrup', 'silchar', 'dibrugarh',
-        'jorhat', 'sqft', 'sq ft', 'square feet', 'sqm', 'gaj', 'brass', 'cft', 'tonne', 'ton',
-        'quintal', 'kg', 'shuttering', 'centering', 'stirrup', 'tie', 'hook', 'seismic'
+        'house',
+        'building',
+        'home',
+        'ghar',
+        'makaan',
+        'room',
+        'kamra',
+        'bhk',
+        'bedroom',
+        'toilet',
+        'bathroom',
+        'balcony',
+        'kitchen',
+        'flat',
+        'plot',
+        'steel',
+        'sariya',
+        'rebar',
+        'rod',
+        'tmt',
+        'fe500',
+        'fe500d',
+        'fe550',
+        'cement',
+        'bora',
+        'bag',
+        'concrete',
+        'rcc',
+        'm20',
+        'm25',
+        'm30',
+        'm35',
+        'm40',
+        'm45',
+        'brick',
+        'eent',
+        'plaster',
+        'plastering',
+        'flooring',
+        'tile',
+        'slab',
+        'chhat',
+        'dhalai',
+        'beam',
+        'column',
+        'pillar',
+        'footing',
+        'plinth',
+        'lintel',
+        'foundation',
+        'bored',
+        'pile',
+        'bridge',
+        'pier',
+        'scour',
+        'lacey',
+        'pool',
+        'tank',
+        'swimming',
+        'waterstop',
+        'waterproof',
+        'waterproofing',
+        'cost',
+        'estimate',
+        'estimation',
+        'budget',
+        'rate',
+        'sor',
+        'pwd',
+        'cpwd',
+        'is 456',
+        'is 13920',
+        'is 1786',
+        'is 3370',
+        'morth',
+        'irc',
+        'assam',
+        'guwahati',
+        'kamrup',
+        'silchar',
+        'dibrugarh',
+        'jorhat',
+        'sqft',
+        'sq ft',
+        'square feet',
+        'sqm',
+        'gaj',
+        'brass',
+        'cft',
+        'tonne',
+        'ton',
+        'quintal',
+        'kg',
+        'shuttering',
+        'centering',
+        'stirrup',
+        'tie',
+        'hook',
+        'seismic',
+        'boundary',
+        'wall',
+        'boundary wall',
+        'fencing',
+        'concertina',
+        'barbed wire',
+        'coping',
+        'commercial',
+        'office',
+        'mall',
+        'retail',
+        'basement',
+        'fire tank',
+        'fire reserve',
+        'multi-storey',
+        'peb',
+        'warehouse',
+        'shed',
+        'purlin',
+        'girt',
+        'rafter',
+        'cladding',
+        'galvalume',
+        'vdf',
+        'pedestal',
+        'road',
+        'highway',
+        'pavement',
+        'drain',
+        'storm drain',
+        'gsb',
+        'wmm',
+        'dbm',
+        'pqc',
+        'dlc',
+        'subgrade'
     ];
 
     protected const GREETING_WORDS = ['hi', 'hello', 'hey', 'namaste', 'pranam', 'good morning', 'good evening', 'good afternoon'];
@@ -34,36 +162,37 @@ You are the Lead Site Engineering Advisor & Technical Consultant for **BuildEsti
 
 # Core Architecture & Strict Zero-Math Protocol
 1. Never Calculate Critical Quantities Manually:
-   - All steel tonnage, 12m commercial rod counts (sariya numbers per diameter), cement bags, brass/CFT aggregates, brick counts, and foundation scour depths are computed exclusively by backend PHP services.
+   - All steel tonnage, 12m commercial rod counts (TMT steel rods per diameter), cement bags, brass/CFT aggregates, brick counts, and foundation scour depths are computed exclusively by backend PHP services.
    - If the user asks for an estimate, bill of quantities (BOQ), or steel breakdown, identify their parameters (built-up area, room counts, foundation type, soil/water parameters) and invoke the relevant estimation tool.
    - Do NOT invent or approximate numbers or formulas on the fly. The deterministic backend supplies the ground truth.
 
 2. Injected Estimate Synchronization (active_estimate):
    - The user's screen displays a live BOQ, commercial rod schedule, and lifecycle breakdown (active_estimate).
-   - Always refer directly to the values currently on their screen when answering follow-up queries (e.g., "Looking at your current 4-phase BOQ...", "For your 12m sariya schedule...").
+   - Always refer directly to the values currently on their screen when answering follow-up queries (e.g., "Looking at your current 4-phase BOQ...", "For your 12m TMT steel rods schedule...").
    - Clearly guide them on site procurement, order batching (e.g., bundle sizes, binding wire requirements at ~12 kg/tonne), and stage-wise execution.
 
 # Exclusions & Strict Boundaries
 - NO Seismic References: Do NOT mention, output, or discuss seismic zone classifications (e.g., Zone V, Zone IV), earthquake hazard factors, ductile detailing clauses for earthquake design, or seismic coefficients in your chat explanations, calculations, or summaries. Focus strictly on structural strength, durability, nominal clear cover, standard lapping, and good site workmanship without bringing up earthquake/seismic mechanics.
-- Imperial vs. Metric Consistency: Match the user's conversational unit (sq.ft vs. m², CFT vs. Brass vs. m³), but always present steel rods in metric commercial stock lengths (12m standard bars) and cement in 50kg bags.
+- Imperial vs. Metric Consistency: Match the user's conversational unit (sq.ft vs. sq.m, CFT vs. Brass vs. cu.m), but always present steel rods in metric commercial stock lengths (12m standard bars) and cement in 50kg bags.
 
 # Technical Standards & Field Rules
 Anchor all practical guidance to verified standards:
 - Plain & Reinforced Concrete: IS 456:2000 (clear covers, nominal/design mixes, strip times).
-- Steel Reinforcement: IS 1786 (Fe500D grades, nominal diameters 8mm - 32mm, W = d² / 162.28 kg/m).
+- Steel Reinforcement: IS 1786 (Fe500D grades, nominal diameters 8mm - 32mm, W = d^2 / 162.28 kg/m).
 - Water Retaining Structures: IS 3370 (M30 concrete, hydrophilic waterstops, dual-layer waterproofing).
 - Anti-Termite Treatment: IS 6313 (chemical barrier specifications).
 - Deep Foundations / Piles: MoRTH Section 2200 for bored cast-in-place RCC piles.
 - Architectural & Space Planning: NBC 2016 standard room dimensions and clear heights.
 
-# Tone & Response Structure
-1. Direct Answer: Provide clear, professional clarity in the opening 1–2 sentences.
-2. Context-Aware Breakdown: When discussing materials, organize by the 4-phase lifecycle:
-   - Phase 1: Structural (M25 concrete, 12m Sariya rods by diameter, formwork shuttering, cover blocks).
-   - Phase 2: Masonry (1st class bricks, 50kg cement bags, sand/aggregate in CFT/Brass, anti-termite).
-   - Phase 3: Finishes (Terrace waterproofing, wall putty, primer, paint, vitrified tiles, epoxy grout).
-   - Phase 4: Openings & MEP (Doors, UPVC windows, overhead tank, FR copper wiring, CPVC/SWR plumbing).
-3. Site Insights & Proactive Engineering Checks: Provide pragmatic field tips (e.g., chair spacers for top rebar mats, honeycombing prevention, proper curing duration of minimum 7–10 days).
+# Tone & Response Structure (Strict 3-Section Format)
+To ensure maximum token efficiency and rapid readability on site, deliver responses strictly structured in three concise sections:
+1. **Executive Cost & Material Summary**: 2–3 sentences stating the project scope, total estimated material cost in INR, cost per sq.ft / unit, and core structural grades (e.g. M25/M30 concrete).
+2. **Key Quantities & TMT Steel Rod Schedule**: Concise bullet points highlighting:
+   - Fe500D TMT Steel Rods (Total tonnes, commercial 12m bar counts by diameter, binding wire).
+   - Major bulk materials (Cement 50kg bags, Sand in Brass/CFT, Coarse Aggregate in Brass/CFT, Bricks count).
+   - Point user to the live side panel for the full itemized 4-phase BOQ breakdown.
+3. **Site Precautions & Workmanship Rules**: 2–3 bullet points on essential execution standards (e.g., minimum clear cover per IS 456, vibrator compaction, 7–10 days water curing, or joint detailing).
+Do NOT output repetitive boilerplate or replicate full multi-page tables already displayed on the user's dashboard screen. Keep explanations punchy and practical.
 EOT;
 
     public function __construct(
@@ -71,7 +200,11 @@ EOT;
         protected ResidentialEstimator $residentialEstimator,
         protected RebarScheduleService $rebarService,
         protected BridgePileService $bridgePileService,
-        protected WaterRetainingService $waterRetainingService
+        protected WaterRetainingService $waterRetainingService,
+        protected BoundaryWallEstimator $boundaryWallEstimator,
+        protected CommercialBuildingEstimator $commercialEstimator,
+        protected WarehousePebEstimator $warehousePebEstimator,
+        protected RoadAndDrainageEstimator $roadAndDrainageEstimator
     ) {}
 
     public function getToolDeclarations(): array
@@ -197,6 +330,104 @@ EOT;
                         'required' => ['length_m', 'width_m', 'depth_m']
                     ]
                 ]
+            ],
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'estimate_boundary_wall',
+                    'description' => 'Estimates earthwork, PCC, brickwork, RCC tie pillars/coping, 12m TMT steel rods, and security fencing for perimeter boundary walls per Assam PWD SOR and IS 1905 / IS 456.',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'length_m' => ['type' => 'number', 'description' => 'Perimeter length of boundary wall in metres.'],
+                            'height_m' => ['type' => 'number', 'description' => 'Height of boundary wall above ground in metres (default 2.0m).', 'default' => 2.0],
+                            'wall_thickness_mm' => ['type' => 'number', 'description' => 'Brick wall thickness in mm: 115 (4.5 inch) or 230 (9 inch). Default 230mm.', 'default' => 230.0],
+                            'pillar_spacing_m' => ['type' => 'number', 'description' => 'Spacing of RCC tie pillars in metres (default 3.0m).', 'default' => 3.0],
+                            'foundation_depth_m' => ['type' => 'number', 'description' => 'Foundation trench depth in metres (default 0.9m).', 'default' => 0.9],
+                            'fencing_type' => [
+                                'type' => 'string',
+                                'enum' => ['concertina_razor_coil', 'barbed_wire_3strand', 'none'],
+                                'description' => 'Type of top security fencing. Defaults to concertina_razor_coil.',
+                                'default' => 'concertina_razor_coil'
+                            ]
+                        ],
+                        'required' => ['length_m']
+                    ]
+                ]
+            ],
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'estimate_commercial_building',
+                    'description' => 'Calculates detailed material quantities, Fe500D steel schedule, M30 concrete, and NBC 2016 Part 4 static fire-water storage for multi-storey commercial complexes per Assam PWD SOR.',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'built_up_area_sqft' => ['type' => 'number', 'description' => 'Built-up area per floor in square feet (e.g., 2500, 5000, 10000).'],
+                            'floors' => ['type' => 'integer', 'description' => 'Number of above-ground storeys (default 3).', 'default' => 3],
+                            'has_basement' => ['type' => 'boolean', 'description' => 'Whether building includes an underground basement level (default false).', 'default' => false],
+                            'occupancy_type' => [
+                                'type' => 'string',
+                                'enum' => ['office', 'retail_mall', 'hotel', 'hospital', 'mixed_use'],
+                                'description' => 'Occupancy category per NBC 2016. Defaults to office.',
+                                'default' => 'office'
+                            ]
+                        ],
+                        'required' => ['built_up_area_sqft']
+                    ]
+                ]
+            ],
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'estimate_warehouse_peb',
+                    'description' => 'Estimates primary/secondary structural steel tonnage (IS 800/IS 801), AZ150 galvalume sheeting (IS 14246), RCC stub pedestals, brick dado walls, and industrial VDF/FM2 floor slabs for Pre-Engineered Steel Buildings (PEB).',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'length_m' => ['type' => 'number', 'description' => 'Clear length of PEB warehouse shed in metres.'],
+                            'width_m' => ['type' => 'number', 'description' => 'Clear span width of PEB warehouse shed in metres.'],
+                            'eave_height_m' => ['type' => 'number', 'description' => 'Eave height in metres (default 7.0m).', 'default' => 7.0],
+                            'floor_load_grade' => [
+                                'type' => 'string',
+                                'enum' => ['medium_duty', 'heavy_duty', 'light_duty'],
+                                'description' => 'Flooring grade for VDF industrial slab. Defaults to medium_duty.',
+                                'default' => 'medium_duty'
+                            ],
+                            'bay_spacing_m' => ['type' => 'number', 'description' => 'Bay spacing between portal frames in metres (default 6.0m).', 'default' => 6.0],
+                            'dado_wall_height_m' => ['type' => 'number', 'description' => 'Perimeter brick dado wall height in metres (default 2.1m).', 'default' => 2.1]
+                        ],
+                        'required' => ['length_m', 'width_m']
+                    ]
+                ]
+            ],
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'estimate_road_and_drainage',
+                    'description' => 'Estimates highway pavement layers (flexible DBM+BC per IRC:37 or rigid PQC M40+DLC per IRC:58), subgrade earthwork compaction, and roadside RCC stormwater drains with precast covers (CPHEEO Manual) per Assam PWRD SOR.',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'length_m' => ['type' => 'number', 'description' => 'Length of roadway in linear metres.'],
+                            'carriageway_width_m' => ['type' => 'number', 'description' => 'Carriageway width in metres (e.g. 3.75m single lane, 7.0m 2-lane, 14m 4-lane). Default 7.0m.', 'default' => 7.0],
+                            'pavement_type' => [
+                                'type' => 'string',
+                                'enum' => ['flexible', 'rigid'],
+                                'description' => 'Pavement category: flexible (GSB+WMM+DBM+BC) or rigid (DLC+PQC M40). Default flexible.',
+                                'default' => 'flexible'
+                            ],
+                            'drain_type' => [
+                                'type' => 'string',
+                                'enum' => ['rcc_covered_both_sides', 'rcc_covered_single_side', 'none'],
+                                'description' => 'Stormwater drainage configuration. Defaults to rcc_covered_both_sides.',
+                                'default' => 'rcc_covered_both_sides'
+                            ],
+                            'shoulder_width_m' => ['type' => 'number', 'description' => 'Shoulder width on each side in metres (default 1.5m).', 'default' => 1.5]
+                        ],
+                        'required' => ['length_m']
+                    ]
+                ]
             ]
         ];
     }
@@ -208,10 +439,10 @@ EOT;
         $words = $matches[0] ?? [];
 
         if (count($words) <= 3 && !empty(array_intersect($words, self::GREETING_WORDS))) {
-            return "🙏 **Namaste! I am BuildEstimate AI** — your Indian Civil Structural & Cost Estimation Engineer.\n\n" .
-                "I provide exact material and steel rod (Sariya) estimations for:\n" .
-                "* **Residential Houses & Buildings** (by room count or sq.ft area per Assam PWD SOR 2025–26)\n" .
-                "* **Sariya (Fe500D TMT)** rod schedules (8mm, 10mm, 12mm, 16mm, 20mm counts & bundles)\n" .
+            return "🙏 **Namaste! I am BuildEstimate AI** - your Indian Civil Structural & Cost Estimation Engineer.\n\n" .
+                "I provide exact material and steel rod (TMT steel rods) estimations for:\n" .
+                "* **Residential Houses & Buildings** (by room count or sq.ft area per Assam PWD SOR 2025-26)\n" .
+                "* **TMT steel rods (Fe500D)** schedules (8mm, 10mm, 12mm, 16mm, 20mm counts & bundles)\n" .
                 "* **Bridge Piers & Deep Foundation Piles** (Lacey Scour Depth & MoRTH specs)\n" .
                 "* **Swimming Pools & Water Tanks** (IS 3370 waterstops & waterproofing)\n\n" .
                 "Please share your building dimensions or room configuration to get started!";
@@ -226,7 +457,7 @@ EOT;
         }
 
         if (!$hasIntent) {
-            return "⚠️ **Scope Notice:** Namaste! I am BuildEstimate AI, dedicated strictly to **Indian civil construction, structural steel rod (sariya) estimations, and PWD SOR costing**.\n\n" .
+            return "Note: Namaste! I am BuildEstimate AI, dedicated strictly to **Indian civil construction, structural steel rod (TMT steel rods) estimations, and PWD SOR costing**.\n\n" .
                 "Please ask a question related to building construction, steel rebar schedules, cement/sand/aggregate, concrete grades (M20/M25), bridge piles, or house floor plans.";
         }
 
@@ -281,12 +512,49 @@ EOT;
                     raftThicknessM: (float)($args['raft_thickness_m'] ?? 0.30)
                 );
 
+            case 'estimate_boundary_wall':
+                return $this->boundaryWallEstimator->estimate(
+                    lengthM: (float)($args['length_m'] ?? 100.0),
+                    heightM: (float)($args['height_m'] ?? 2.0),
+                    wallThicknessMm: (float)($args['wall_thickness_mm'] ?? 230.0),
+                    pillarSpacingM: (float)($args['pillar_spacing_m'] ?? 3.0),
+                    foundationDepthM: (float)($args['foundation_depth_m'] ?? 0.9),
+                    fencingType: (string)($args['fencing_type'] ?? 'concertina_razor_coil')
+                );
+
+            case 'estimate_commercial_building':
+                return $this->commercialEstimator->estimate(
+                    builtUpAreaSqft: (float)($args['built_up_area_sqft'] ?? 3000.0),
+                    floors: (int)($args['floors'] ?? 3),
+                    hasBasement: (bool)($args['has_basement'] ?? false),
+                    occupancyType: (string)($args['occupancy_type'] ?? 'office')
+                );
+
+            case 'estimate_warehouse_peb':
+                return $this->warehousePebEstimator->estimate(
+                    lengthM: (float)($args['length_m'] ?? 40.0),
+                    widthM: (float)($args['width_m'] ?? 20.0),
+                    eaveHeightM: (float)($args['eave_height_m'] ?? 7.0),
+                    floorLoadGrade: (string)($args['floor_load_grade'] ?? 'medium_duty'),
+                    baySpacingM: (float)($args['bay_spacing_m'] ?? 6.0),
+                    dadoWallHeightM: (float)($args['dado_wall_height_m'] ?? 2.1)
+                );
+
+            case 'estimate_road_and_drainage':
+                return $this->roadAndDrainageEstimator->estimate(
+                    lengthM: (float)($args['length_m'] ?? 500.0),
+                    carriagewayWidthM: (float)($args['carriageway_width_m'] ?? 7.0),
+                    pavementType: (string)($args['pavement_type'] ?? 'flexible'),
+                    drainType: (string)($args['drain_type'] ?? 'rcc_covered_both_sides'),
+                    shoulderWidthM: (float)($args['shoulder_width_m'] ?? 1.5)
+                );
+
             default:
                 return ['error' => "Unknown tool: {$toolName}"];
         }
     }
 
-    public function processChat(array $messages, ?array $activeEstimate = null, ?string $apiKey = null, ?string $model = null): array
+    public function processChat(array $messages, ?array $activeEstimate = null, ?string $apiKey = null, ?string $model = null, ?string $retrievedContext = null): array
     {
         $lastUserMsg = '';
         for ($i = count($messages) - 1; $i >= 0; $i--) {
@@ -325,7 +593,7 @@ EOT;
 
         if (empty($activeApiKey) || $activeApiKey === 'your_groq_api_key_here') {
             return [
-                'response' => "⚠️ **Groq API Key Required:** Please configure `GROQ_API_KEY` in `.env` or pass `api_key` in the request header/body.",
+                'response' => "Groq API Key Required: Please configure `GROQ_API_KEY` in `.env` or pass `api_key` in the request header/body.",
                 'tool_calls' => [],
                 'tool_results' => [],
                 'tokens_used' => 0,
@@ -347,10 +615,10 @@ EOT;
                 $contextBrief .= "- Total Built-up Area: {$activeEstimate['inputs']['total_built_up_area_sqft']} sq.ft ({$activeEstimate['inputs']['number_of_floors']} floor(s))\n";
             }
             if (!empty($activeEstimate['cost_summary']['total_estimated_materials_cost_inr'])) {
-                $contextBrief .= "- Total Material Cost: ₹{$activeEstimate['cost_summary']['total_estimated_materials_cost_inr']} (₹{$activeEstimate['cost_summary']['cost_per_sqft_inr']}/sqft)\n";
+                $contextBrief .= "- Total Material Cost: INR {$activeEstimate['cost_summary']['total_estimated_materials_cost_inr']} (INR {$activeEstimate['cost_summary']['cost_per_sqft_inr']}/sqft)\n";
             }
             if (!empty($activeEstimate['rebar_breakdown']['total_steel_kg'])) {
-                $contextBrief .= "- Sariya Steel: {$activeEstimate['rebar_breakdown']['total_steel_tonnes']} Tonnes ({$activeEstimate['rebar_breakdown']['total_standard_12m_rods']} standard 12m rods)\n";
+                $contextBrief .= "- TMT Steel Rods: {$activeEstimate['rebar_breakdown']['total_steel_tonnes']} Tonnes ({$activeEstimate['rebar_breakdown']['total_standard_12m_rods']} standard 12m rods)\n";
             }
             if (!empty($activeEstimate['indian_market_materials'])) {
                 $im = $activeEstimate['indian_market_materials'];
@@ -368,7 +636,14 @@ EOT;
                 'content' => $contextBrief
             ];
         }
-        
+
+        if (!empty($retrievedContext)) {
+            $fullMessages[] = [
+                'role' => 'system',
+                'content' => "# RETRIEVED CONTEXT / KNOWLEDGE BASE:\n" . trim($retrievedContext)
+            ];
+        }
+
         // Sliding window: keep only the last 4 conversational turns to optimize prompt tokens
         $recentMessages = array_slice($messages, -6);
         foreach ($recentMessages as $m) {
@@ -384,7 +659,7 @@ EOT;
             'tools' => $this->getToolDeclarations(),
             'tool_choice' => 'auto',
             'temperature' => 0.1,
-            'max_tokens' => 512,
+            'max_tokens' => 1800,
         ];
 
         $verifySsl = config('construction.groq.verify_ssl', false);
@@ -448,10 +723,15 @@ EOT;
             ];
             $toolResults[$fnName] = $toolRes;
 
+            // Sanitize and compress tool output serialized to LLM:
+            // 1. Strip seismic references to maintain negative constraint consistency
+            // 2. Extract only critical engineering facts and totals to reduce token footprint by ~60%
+            $llmToolRes = $this->compressToolResultForLlm($toolRes);
+
             $fullMessages[] = [
                 'role' => 'tool',
                 'tool_call_id' => $call['id'] ?? '',
-                'content' => json_encode($toolRes)
+                'content' => json_encode($llmToolRes)
             ];
         }
 
@@ -460,7 +740,7 @@ EOT;
             'model' => $activeModel,
             'messages' => $fullMessages,
             'temperature' => 0.1,
-            'max_tokens' => 512,
+            'max_tokens' => 850,
         ];
 
         try {
@@ -500,5 +780,84 @@ EOT;
             'model_used' => $activeModel
         ];
     }
-}
 
+    /**
+     * Compress full estimation tool payload for LLM consumption.
+     * Strips nested itemized arrays, UI boilerplate, and long notes while preserving
+     * exact engineering metrics (costs, TMT 12m rods, cement bags, CFT/Brass quantities).
+     */
+    protected function compressToolResultForLlm(array $result): array
+    {
+        if (isset($result['error'])) {
+            return $result;
+        }
+
+        // Always strip negative constraint keys
+        unset($result['seismic_safety_provisions'], $result['seismic_and_bearing_provisions']);
+
+        $compressed = [
+            'project_type' => $result['project_type'] ?? 'Civil Construction Estimation',
+            'scope' => $result['scope'] ?? ($result['project_type'] ?? ''),
+            'inputs' => $result['inputs'] ?? [],
+        ];
+
+        // 1. Costs & Totals
+        if (!empty($result['cost_summary'])) {
+            $compressed['cost_summary'] = $result['cost_summary'];
+        } elseif (!empty($result['cost_breakdown'])) {
+            $compressed['cost_breakdown'] = $result['cost_breakdown'];
+        }
+
+        // 2. TMT Steel Rods (Fe500D) metrics
+        if (!empty($result['rebar_breakdown'])) {
+            $rb = $result['rebar_breakdown'];
+            $compressed['tmt_steel_rods'] = [
+                'total_steel_kg' => $rb['total_steel_kg'] ?? 0,
+                'total_steel_tonnes' => $rb['total_steel_tonnes'] ?? 0,
+                'total_12m_rods' => $rb['total_standard_12m_rods'] ?? 0,
+                'binding_wire_kg' => $rb['binding_wire_kg'] ?? 0,
+                'summary_schedule' => $rb['bar_schedule'] ?? []
+            ];
+        } elseif (!empty($result['indian_market_materials']['sariya_tmt_steel'])) {
+            $compressed['tmt_steel_rods'] = $result['indian_market_materials']['sariya_tmt_steel'];
+        }
+
+        // 3. Essential Indian Market Bulk Materials
+        if (!empty($result['indian_market_materials'])) {
+            $im = $result['indian_market_materials'];
+            $compressed['bulk_materials'] = [
+                'cement_bags_50kg' => $im['cement_bags_50kg']['total_bags'] ?? ($result['civil_and_flooring']['total_cement_bags_50kg'] ?? null),
+                'sand_brass' => $im['sand_reti_msand']['volume_brass'] ?? null,
+                'aggregate_brass' => $im['coarse_aggregate_rori_gitti']['volume_brass'] ?? null,
+                'bricks_count' => $im['first_class_bricks']['total_bricks'] ?? ($result['structural_elements']['total_bricks_count'] ?? null),
+            ];
+        }
+
+        // 4. Domain-specific concise keys
+        if (!empty($result['scour_hydraulics'])) {
+            $compressed['scour_hydraulics'] = $result['scour_hydraulics'];
+            $compressed['pile_geometry'] = $result['pile_geometry'] ?? [];
+        }
+
+        if (!empty($result['concrete_and_waterproofing'])) {
+            $compressed['concrete_and_waterproofing'] = $result['concrete_and_waterproofing'];
+        }
+
+        if (!empty($result['fire_safety_provisions'])) {
+            $compressed['fire_safety_provisions'] = $result['fire_safety_provisions'];
+        }
+
+        if (!empty($result['peb_structural_steel'])) {
+            $compressed['peb_structural_steel'] = $result['peb_structural_steel'];
+            $compressed['cladding_and_envelope'] = $result['cladding_and_envelope'] ?? [];
+        }
+
+        if (!empty($result['pavement_layers'])) {
+            $compressed['pavement_layers'] = $result['pavement_layers'];
+            $compressed['subgrade_earthwork'] = $result['subgrade_earthwork'] ?? [];
+            $compressed['stormwater_drainage'] = $result['stormwater_drainage'] ?? [];
+        }
+
+        return $compressed;
+    }
+}

@@ -41,6 +41,38 @@ class RatesController extends Controller
             ]);
         }
 
+        if ($category === 'boundary_wall') {
+            return response()->json([
+                'category' => 'Boundary Wall & Fencing Works',
+                'rates' => $allRates['boundary_wall'] ?? [],
+                'jurisdiction' => 'Assam PWD (Building) SOR 2025-2026'
+            ]);
+        }
+
+        if ($category === 'commercial') {
+            return response()->json([
+                'category' => 'Commercial Building Works',
+                'rates' => $allRates['commercial'] ?? [],
+                'jurisdiction' => $jurisdiction['residential_building'] ?? 'Assam PWD & NBC 2016'
+            ]);
+        }
+
+        if ($category === 'warehouse_peb') {
+            return response()->json([
+                'category' => 'Industrial Pre-Engineered Building (PEB) Warehouse',
+                'rates' => $allRates['warehouse_peb'] ?? [],
+                'jurisdiction' => 'Assam PWD Industrial Infrastructure & IS 800'
+            ]);
+        }
+
+        if ($category === 'road_and_drainage') {
+            return response()->json([
+                'category' => 'Highway Pavements & Stormwater Drainage',
+                'rates' => $allRates['road_and_drainage'] ?? [],
+                'jurisdiction' => 'Assam PWRD Roads SOR 2025-2026 & MoRTH'
+            ]);
+        }
+
         if ($category === 'standards') {
             return response()->json($standards);
         }

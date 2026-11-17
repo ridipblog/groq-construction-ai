@@ -166,7 +166,7 @@
                     <button @click="sendPrompt('Estimate 1200mm bored cast-in-situ RCC bridge pier piles for peak flood discharge Q=4200 cumecs')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg transition font-medium">
                         🌉 Highway Bridge Pier Piles (4200 cumecs)
                     </button>
-                    <button @click="sendPrompt('Calculate sariya rod schedule for 8500 kg total steel requirement for column footings and plinth beams')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg transition font-medium">
+                    <button @click="sendPrompt('Calculate TMT steel rods schedule for 8500 kg total steel requirement for column footings and plinth beams')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg transition font-medium">
                         🔩 Footing & Plinth Rebar (8.5 Tonnes)
                     </button>
                 </div>
@@ -239,19 +239,19 @@
                                 <span class="text-[10px] text-slate-500 block mt-0.5">Built-up Area Basis</span>
                             </div>
                             <div class="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4">
-                                <span class="text-xs font-semibold text-amber-800 block">Total 12m Sariya Rods</span>
-                                <span class="text-2xl font-black text-amber-700 tracking-tight" x-text="lastResult.indian_market_materials ? lastResult.indian_market_materials.sariya_tmt_steel.total_12m_commercial_rods : (lastResult.total_standard_12m_rods || 'N/A')"></span>
+                                <span class="text-xs font-semibold text-amber-800 block">Total 12m TMT Steel Rods</span>
+                                <span class="text-2xl font-black text-amber-700 tracking-tight" x-text="lastResult.indian_market_materials ? (lastResult.indian_market_materials.sariya_tmt_steel ? lastResult.indian_market_materials.sariya_tmt_steel.total_12m_commercial_rods : lastResult.indian_market_materials.tmt_steel_rods.total_12m_commercial_rods) : (lastResult.total_standard_12m_rods || 'N/A')"></span>
                                 <span class="text-[10px] text-amber-700/80 block mt-0.5">Grade Fe 500D (IS 1786)</span>
                             </div>
                         </div>
                     </template>
 
-                    <!-- Rebar Sariya Schedule Table -->
+                    <!-- Rebar TMT Steel Rods Schedule Table -->
                     <template x-if="lastResult.rebar_breakdown || lastResult.bar_schedule">
                         <div class="space-y-2.5">
                             <div class="flex items-center justify-between">
                                 <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
-                                    <span>🔩</span> Sariya Schedule (Commercial 12-Metre Rods)
+                                    <span>🔩</span> TMT Steel Rods Schedule (Commercial 12-Metre Rods)
                                 </h4>
                                 <span class="text-[11px] text-slate-500">
                                     Binding Wire: <b class="text-slate-700" x-text="(lastResult.rebar_breakdown ? lastResult.rebar_breakdown.binding_wire_kg : lastResult.binding_wire_kg) + ' kg'"></b>

@@ -28,6 +28,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/rebar-schedule', [EstimateController::class, 'rebarSchedule']);
         Route::post('/bridge-pile', [EstimateController::class, 'bridgePile']);
         Route::post('/swimming-pool', [EstimateController::class, 'swimmingPool']);
+        Route::post('/boundary-wall', [EstimateController::class, 'boundaryWall']);
+        Route::post('/commercial', [EstimateController::class, 'commercial']);
+        Route::post('/warehouse-peb', [EstimateController::class, 'warehousePeb']);
+        Route::post('/road-and-drainage', [EstimateController::class, 'roadAndDrainage']);
     });
 
     Route::get('/rates', [RatesController::class, 'index']);

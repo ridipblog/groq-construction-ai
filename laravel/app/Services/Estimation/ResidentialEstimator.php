@@ -150,10 +150,10 @@ class ResidentialEstimator
                 'phase_1_structural' => [
                     'title' => 'Structural Core & Foundation',
                     'items' => [
-                        ['material' => 'M25 Structural Concrete', 'quantity' => "{$concreteM3} m³", 'packaging' => 'Design Mix / RMC', 'code' => 'IS 456'],
-                        ['material' => 'Fe500D TMT Sariya (12m Rods)', 'quantity' => "{$rebarDetails['total_standard_12m_rods']} Rods", 'packaging' => round($steelTonne, 2) . ' Tonnes (' . round($totalSteelKg / 100, 1) . ' Quintals)', 'code' => 'IS 1786'],
+                        ['material' => 'M25 Structural Concrete', 'quantity' => "{$concreteM3} cu.m", 'packaging' => 'Design Mix / RMC', 'code' => 'IS 456'],
+                        ['material' => 'Fe500D TMT Steel Rods (12m Rods)', 'quantity' => "{$rebarDetails['total_standard_12m_rods']} Rods", 'packaging' => round($steelTonne, 2) . ' Tonnes (' . round($totalSteelKg / 100, 1) . ' Quintals)', 'code' => 'IS 1786'],
                         ['material' => 'Binding Wire (18 Gauge G.I.)', 'quantity' => "{$rebarDetails['binding_wire_kg']} kg", 'packaging' => 'Coils (~12 kg/Tonne)', 'code' => 'IS 280'],
-                        ['material' => 'Shuttering & Formwork Centering', 'quantity' => "{$shutteringSqft} sq.ft", 'packaging' => "{$shutteringSqm} m² (Steel / Plywood)", 'code' => 'IS 14687'],
+                        ['material' => 'Shuttering & Formwork Centering', 'quantity' => "{$shutteringSqft} sq.ft", 'packaging' => "{$shutteringSqm} sq.m (Steel / Plywood)", 'code' => 'IS 14687'],
                         ['material' => 'RCC Cover Blocks (20/25/40mm)', 'quantity' => (int) round($totalBuiltUpSqft * 1.8) . ' Nos', 'packaging' => 'Precast High-Density PVC/Mortar', 'code' => 'SP 34'],
                     ]
                 ],
@@ -175,7 +175,7 @@ class ResidentialEstimator
                         ['material' => 'Acrylic Wall Primer (1 Coat)', 'quantity' => "{$primerLitres} Litres", 'packaging' => 'Water-based Primer Buckets', 'code' => 'Interior/Exterior'],
                         ['material' => 'Interior Wall Paint Emulsion', 'quantity' => "{$interiorPaintLitres} Litres", 'packaging' => 'Premium Acrylic Emulsion (2 Coats)', 'code' => 'IS 5411'],
                         ['material' => 'Exterior Weather-Proof Emulsion', 'quantity' => "{$exteriorPaintLitres} Litres", 'packaging' => '100% Acrylic Anti-Fungal Weather Guard', 'code' => 'IS 15489'],
-                        ['material' => 'Vitrified Floor Tiles (600x600mm)', 'quantity' => "{$flooringSqft} sq.ft", 'packaging' => "{$flooringM2} m² Double-Charged Vitrified", 'code' => 'IS 15622'],
+                        ['material' => 'Vitrified Floor Tiles (600x600mm)', 'quantity' => "{$flooringSqft} sq.ft", 'packaging' => "{$flooringM2} sq.m Double-Charged Vitrified", 'code' => 'IS 15622'],
                         ['material' => 'Tile Adhesive (Polymer Base)', 'quantity' => "{$tileAdhesiveKg} kg", 'packaging' => "{$tileAdhesiveBags20kg} Bags (20kg Adhesive)", 'code' => 'IS 15477'],
                         ['material' => 'Waterproof Epoxy Tile Grout', 'quantity' => "{$epoxyGroutKg} kg", 'packaging' => 'Solid Epoxy Grout Packs', 'code' => 'ANSI A118.3'],
                     ]

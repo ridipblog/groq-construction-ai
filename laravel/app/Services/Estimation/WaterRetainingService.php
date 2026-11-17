@@ -38,8 +38,8 @@ class WaterRetainingService
         $rateWaterstop = $liquidRates['waterstop']['rate'] ?? 450.0;
         $rateDualWaterproof = $liquidRates['dual_waterproofing']['rate'] ?? 650.0;
         $rateTiles = $liquidRates['pool_tiles']['rate'] ?? 1450.0;
-        $rateSteelTonne = 82000.0;
-        $rateM30Concrete = 8000.0;
+        $rateSteelTonne = $liquidRates['steel_fe500d']['rate'] ?? 82000.0;
+        $rateM30Concrete = $liquidRates['concrete_m30']['rate'] ?? 8000.0;
 
         $costWaterstop = $waterstopLinearM * $rateWaterstop;
         $costWaterproofing = $totalWettedAreaM2 * $rateDualWaterproof;
